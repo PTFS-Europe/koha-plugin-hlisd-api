@@ -67,9 +67,9 @@ Make a call to /api/v1/libraries/{id}
 =cut
 
 sub LibraryDetails {
-    my ($self, $library_id) = @_;
+    my ( $self, $library_id ) = @_;
 
-    return $self->_make_request( 'GET', 'libraries/'.$library_id );
+    return $self->_make_request( 'GET', 'libraries/' . $library_id );
 }
 
 =head3 Authenticate
@@ -90,28 +90,35 @@ sub Authenticate {
 }
 
 # Makes a request to a specified endpoint using the provided method and payload data.
-# 
+#
 # Parameters:
 #   $method: The HTTP method for the request.
 #   $endpoint_url: The URL endpoint to make the request to.
 #   $payload: The payload data to send with the request.
-# 
+#
 # Return: The response from the endpoint.
 sub _make_request {
     my ( $self, $method, $endpoint_url, $payload ) = @_;
 
     my $header;
-    unless ($endpoint_url eq 'auth/login') {
+    unless ( $endpoint_url eq 'auth/login' ) {
 
         $self->{auth} = $self->Authenticate() unless $self->{auth};
 
-        my $now_time = dt_from_string;
-        my $token_exp_day = substr $self->{auth}->{exp}, 3, 2;
-        my $token_exp_month = substr $self->{auth}->{exp}, 0, 2;
-        my $token_exp_year = substr $self->{auth}->{exp}, 6, 4;
-        my $token_exp_hour = substr $self->{auth}->{exp}, 11, 2;
-        my $token_exp_min = substr $self->{auth}->{exp}, 14, 2;
-        my $token_exp_dt = dt_from_string($token_exp_year . '-' . $token_exp_month . '-' . $token_exp_day . ' ' . $token_exp_hour . ':' . $token_exp_min);
+        die 'HLISD API error: ' . $self->{auth}->{error} if $self->{auth}->{error};
+
+        my $now_time        = dt_from_string;
+        my $token_exp_day   = substr $self->{auth}->{exp}, 3,  2;
+        my $token_exp_month = substr $self->{auth}->{exp}, 0,  2;
+        my $token_exp_year  = substr $self->{auth}->{exp}, 6,  4;
+        my $token_exp_hour  = substr $self->{auth}->{exp}, 11, 2;
+        my $token_exp_min   = substr $self->{auth}->{exp}, 14, 2;
+        my $token_exp_dt =
+            dt_from_string( $token_exp_year . '-'
+                . $token_exp_month . '-'
+                . $token_exp_day . ' '
+                . $token_exp_hour . ':'
+                . $token_exp_min );
 
         $self->{auth} = $self->Authenticate() if ( $now_time->epoch > $token_exp_dt->epoch );
 
