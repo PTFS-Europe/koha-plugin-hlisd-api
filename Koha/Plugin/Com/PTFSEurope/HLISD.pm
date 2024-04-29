@@ -14,6 +14,8 @@ use Cwd            qw(abs_path);
 use CGI;
 use JSON qw( decode_json );
 
+use Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API;
+
 our $VERSION = "1.0.0";
 
 our $metadata = {
@@ -36,6 +38,7 @@ Required I<Koha::Plugin> method
 sub new {
     my ( $class, $args ) = @_;
 
+
     ## We need to add our metadata here so our base class can access it
     $args->{'metadata'} = $metadata;
     $args->{'metadata'}->{'class'} = $class;
@@ -46,6 +49,9 @@ sub new {
     my $self = $class->SUPER::new($args);
 
     $self->{config} = decode_json( $self->retrieve_data('hlisd_config') || '{}' );
+
+    my $api = Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API->new($self->{config});
+    $self->{_api} = $api;
 
     return $self;
 }
@@ -93,7 +99,5 @@ sub upgrade {
 sub uninstall() {
     return 1;
 }
-
-
 
 1;

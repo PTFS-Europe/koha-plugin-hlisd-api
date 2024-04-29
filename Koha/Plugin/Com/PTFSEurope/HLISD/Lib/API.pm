@@ -22,12 +22,14 @@ use warnings;
 
 use LWP::UserAgent;
 use HTTP::Request;
-use JSON qw( encode_json );
+use JSON qw( encode_json decode_json );
 use CGI;
 use URI;
 
 use Koha::Logger;
 use C4::Context;
+
+use Koha::Plugin::Com::PTFSEurope::HLISD;
 
 =head1 NAME
 
@@ -36,132 +38,71 @@ ReprintsDesk - Client interface to ReprintsDesk API plugin (koha-plugin-reprints
 =cut
 
 sub new {
-    my ($class) = @_;
+    my ( $class, $plugin_config ) = @_;
 
     my $cgi = new CGI;
 
     my $interface = C4::Context->interface;
-    my $url =
-        $interface eq "intranet"
-        ? C4::Context->preference('staffClientBaseURL')
-        : C4::Context->preference('OPACBaseURL');
+    my $base_url  = 'https://hlisd.org/api/v1';
 
-    # We need a URL to continue, otherwise we can't make the API calls
-    if ( !$url ) {
-        Koha::Logger->get->warn("Syspref staffClientBaseURL or OPACBaseURL not set!");
-        die;
-    }
-
-    my $uri = URI->new($url);
     my $self = {
-        ua      => LWP::UserAgent->new,
-        cgi     => new CGI,
-        logger => Koha::Logger->get( { category => 'Koha.Plugin.Com.PTFSEurope.HLISD.Lib.API' } ),
-        baseurl => $uri->scheme . "://" . $uri->host . ":" . $uri->port . "/api/v1/contrib/hlisd"
+        ua            => LWP::UserAgent->new,
+        cgi           => new CGI,
+        logger        => Koha::Logger->get( { category => 'Koha.Plugin.Com.PTFSEurope.HLISD.Lib.API' } ),
+        base_url      => $base_url,
+        plugin_config => $plugin_config
     };
 
     bless $self, $class;
+
+    use Data::Dumper;
+    $Data::Dumper::Maxdepth = 2;
+    warn Dumper( '##### 1 #######################################################line: ' . __LINE__ );
+    warn Dumper( $self->Authenticate() );
+    warn Dumper('##### end1 #######################################################');
+
     return $self;
 }
 
-=head3 Order_PlaceOrder2
+=head3 Authenticate
 
-Make a call to the /Order_PlaceOrder2 API
+Make a call to /auth/login
 
 =cut
 
-sub Order_PlaceOrder2 {
-    my ( $self, $metadata, $borrowernumber, $illrequest_id ) = @_;
+sub Authenticate {
+    my ($self) = @_;
 
-    my $borrower = Koha::Patrons->find($borrowernumber);
-
-    my @address1_arr =
-        grep { defined && length $_ > 0 } ( $borrower->streetnumber, $borrower->address, $borrower->address2 );
-    my $address1_str = join ", ", @address1_arr;
-
-    # Request including passed metadata
-    my $body = {
-        illrequest_id   => $illrequest_id,
-        orderdetail     => $metadata,
-        deliveryprofile => {
-            firstname   => substr( $borrower->firstname,     0, 50 ) || "",
-            lastname    => substr( $borrower->surname,       0, 50 ) || "",
-            address1    => substr( $address1_str,            0, 50 ) || "",
-            city        => substr( $borrower->city,          0, 50 ) || "",
-            statecode   => substr( $metadata->{statecode},   0, 2 )  || "",
-            statename   => substr( $metadata->{statename},   0, 50 ) || "",
-            zip         => substr( $metadata->{zipcode},     0, 50 ) || "",
-            countrycode => substr( $metadata->{countrycode}, 0, 2 )  || "",
-            phone       => substr( $borrower->phone,         0, 50 ) || "",
-            fax         => substr( $borrower->fax,           0, 50 ) || "",
-            email       => substr( $borrower->email,         0, 64 ) || "",
-        }
+    my $data = {
+        email    => $self->{plugin_config}->{username},
+        password => $self->{plugin_config}->{password},
     };
 
-    my $request = HTTP::Request->new( 'POST', $self->{baseurl} . "/placeorder2" );
-
-    $request->header( "Content-type" => "application/json" );
-    $request->content( encode_json($body) );
-
-    return $self->{ua}->request($request);
+    return $self->_make_request( 'POST', 'auth/login', $data, undef );
 }
 
-=head3 User_GetOrderHistory
+# Makes a request to a specified endpoint using the provided method and payload data.
+# Parameters:
+#   $method: The HTTP method for the request.
+#   $endpoint_url: The URL endpoint to make the request to.
+# Return: The response from the endpoint.
+sub _make_request {
+    my ( $self, $method, $endpoint_url, $payload, $header ) = @_;
 
-Make a call to the /User_GetOrderHistory API
+    # If token exists and is valid, use token
 
-=cut
+    #TODO:
 
-sub User_GetOrderHistory {
-    my ( $self, $filter_type_id ) = @_;
+    # Else, authenticate and fetch token
 
-    my $body = encode_json( { filterTypeID => $filter_type_id } );
+    my $uri = URI->new( $self->{base_url} . '/' . $endpoint_url );
+    $uri->query_form($payload);
 
-    my $request = HTTP::Request->new( 'POST', $self->{baseurl} . "/getorderhistory" );
+    my $request  = HTTP::Request->new( $method => $uri );
+    my $ua       = LWP::UserAgent->new;
+    my $response = $ua->request($request);
 
-    $request->header( "Content-type" => "application/json" );
-    $request->content($body);
-
-    return $self->{ua}->request($request);
-}
-
-=head3 ArticleShelf_CheckAvailability
-
-Make a call to the /ArticleShelf_CheckAvailability ReprinsDesk webservice
-
-=cut
-
-sub ArticleShelf_CheckAvailability {
-    my ( $self, $ids_to_check ) = @_;
-
-    my $body = encode_json($ids_to_check);
-
-    my $request = HTTP::Request->new( 'POST', $self->{baseurl} . "/checkavailability" );
-
-    $request->header( "Content-type" => "application/json" );
-    $request->content($body);
-
-    return $self->{ua}->request($request);
-}
-
-
-=head3 Order_GetPriceEstimate2
-
-Make a call to the /Order_GetPriceEstimate2 ReprinsDesk webservice
-
-=cut
-
-sub Order_GetPriceEstimate2 {
-    my ( $self, $params ) = @_;
-
-    my $body = encode_json($params);
-
-    my $request = HTTP::Request->new( 'POST', $self->{baseurl} . "/getpriceestimate" );
-
-    $request->header( "Content-type" => "application/json" );
-    $request->content($body);
-
-    return $self->{ua}->request($request);
+    return decode_json( $response->decoded_content );
 }
 
 1;
