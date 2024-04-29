@@ -1,0 +1,87 @@
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha: HLISD API Plugin: Configuration</title>
+<style>
+    #hlisd_config_h3 {
+        margin: 20px;
+    }
+
+    #hlisd_configure {
+        display: block;
+        margin: 20px;
+    }
+
+    .hlisd_config_field {
+        padding: 20px 10px;
+        margin: 20px 0;
+        background: #eee;
+        border-radius: 10px;
+        list-style: none;
+    }
+
+    #hlisd_upgrade {
+        margin: 20px;
+    }
+
+    input#hlisd_email_input {
+        min-width: 500px;
+    }
+
+    h4.section_header,
+    #submit_button {
+        margin-top: 40px;
+    }
+
+    .config_field {
+        padding: 10px;
+        border-radius: 5px;
+        background: #F4F8F9;
+        margin: 10px 0;
+    }
+
+    .instruction {
+        margin-bottom: 10px;
+    }
+
+</style>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; HLISD API &rsaquo; Configuration</div>
+
+<div id="doc3">
+
+    <h3 id="hlisd_config_h3">Koha: HLISD API: Configuration</h3>
+    <form id="hlisd_configure" method="get">
+        <input type="hidden" name="class" value="[% CLASS %]"/>
+        <input type="hidden" name="method" value="[% METHOD %]"/>
+        <h4 class="section_header">HLISD API credentials</h4>
+        <div id="hlisd_username" class="config_field">
+            <label for="hlisd_username_input">Username: </label>
+            <input id="hlisd_username_input" class="required_input" placeholder="Enter username" type="text" name="username" value="[% config.username | html %]">
+            <p>The username to be used for accessing the HLISD API</p>
+        </div>
+        <div id="hlisd_password" class="config_field">
+            <label for="hlisd_password_input">Password: </label>
+            <input id="hlisd_password_input" class="required_input" placeholder="Enter password" type="text" name="password" value="[% config.password | html %]">
+            <p>The password to be used for accessing the HLISDAPI</p>
+        </div>
+
+        <input type="hidden" name="save" value="1" />
+        <input id="submit_button" type="submit" value="Save configuration" />
+    </form>
+
+    <hr/>
+
+    <div id="hlisd_upgrade">
+        <h5>Upgrade status</h5>
+        [% IF last_upgraded %]
+            Plugin was last upgraded on this system on [% last_upgraded | $KohaDates with_hours => 1 %]
+        [% ELSE %]
+            Plugin has never been upgraded.
+        [% END %]
+    </div>
+
+[% INCLUDE 'intranet-bottom.inc' %]

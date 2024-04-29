@@ -7,6 +7,7 @@ use warnings;
 use base            qw(Koha::Plugins::Base);
 use Koha::DateUtils qw( dt_from_string );
 
+use JSON qw( encode_json decode_json );
 use File::Basename qw( dirname );
 use C4::Installer;
 use Cwd            qw(abs_path);
@@ -16,7 +17,7 @@ use JSON qw( decode_json );
 our $VERSION = "1.0.0";
 
 our $metadata = {
-    name            => 'HLISD',
+    name            => 'HLISD API',
     author          => 'PTFS-Europe',
     date_authored   => '2024-04-26',
     date_updated    => '2024-04-26',
@@ -44,7 +45,7 @@ sub new {
     ## and returns our actual $self
     my $self = $class->SUPER::new($args);
 
-    # $self->{config} = decode_json( $self->retrieve_data('hlisd_config') || '{}' );
+    $self->{config} = decode_json( $self->retrieve_data('hlisd_config') || '{}' );
 
     return $self;
 }
@@ -55,28 +56,26 @@ Optional I<Koha::Plugin> method if it implements configuration
 
 =cut
 
-# sub configure {
-#     my ( $self, $args ) = @_;
-#     my $cgi = $self->{'cgi'};
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
 
-#     unless ( $cgi->param('save') ) {
-#         my $template = $self->get_template( { file => 'configure.tt' } );
+    unless ( $cgi->param('save') ) {
+        my $template = $self->get_template( { file => 'configure.tt' } );
 
-#         ## Grab the values we already have for our settings, if any exist
-#         $template->param(
-#             example => $self->retrieve_data('example'),
-#         );
+        ## Grab the values we already have for our settings, if any exist
+        $template->param(
+            config => $self->{config},
+        );
 
-#         $self->output_html( $template->output() );
-#     } else {
-#         $self->store_data(
-#             {
-#                 example => $cgi->param('example'),
-#             }
-#         );
-#         $self->go_home();
-#     }
-# }
+        $self->output_html( $template->output() );
+    } else {
+        my $hashed = { map { $_ => ( scalar $cgi->param($_) )[0] } $cgi->param };
+
+        $self->store_data( { hlisd_config => scalar encode_json($hashed) } );
+        $self->go_home();
+    }
+}
 
 sub install() {
     return 1;
