@@ -22,10 +22,6 @@
         margin: 20px;
     }
 
-    input#hlisd_email_input {
-        min-width: 500px;
-    }
-
     h4.section_header,
     #submit_button {
         margin-top: 40px;
@@ -58,10 +54,10 @@
         <input type="hidden" name="class" value="[% CLASS %]"/>
         <input type="hidden" name="method" value="[% METHOD %]"/>
         <h4 class="section_header">HLISD API credentials</h4>
-        <div id="hlisd_username" class="config_field">
-            <label for="hlisd_username_input">Username: </label>
-            <input id="hlisd_username_input" class="required_input" placeholder="Enter username" type="text" name="username" value="[% config.username | html %]">
-            <p>The username to be used for accessing the HLISD API</p>
+        <div id="hlisd_email" class="config_field">
+            <label for="hlisd_email_input">Email: </label>
+            <input id="hlisd_email_input" class="required_input" placeholder="Enter email" type="text" name="email" value="[% config.email | html %]">
+            <p>The email to be used for accessing the HLISD API</p>
         </div>
         <div id="hlisd_password" class="config_field">
             <label for="hlisd_password_input">Password: </label>

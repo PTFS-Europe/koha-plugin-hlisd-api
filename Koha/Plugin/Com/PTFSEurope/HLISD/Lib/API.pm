@@ -82,7 +82,7 @@ sub Authenticate {
     my ($self) = @_;
 
     my $data = {
-        email    => $self->{plugin_config}->{username},
+        email    => $self->{plugin_config}->{email},
         password => $self->{plugin_config}->{password},
     };
 
