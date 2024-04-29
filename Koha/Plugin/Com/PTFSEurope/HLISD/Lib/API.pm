@@ -30,6 +30,7 @@ use Koha::Logger;
 use C4::Context;
 
 use Koha::Plugin::Com::PTFSEurope::HLISD;
+use Koha::DateUtils qw( dt_from_string );
 
 =head1 NAME
 
@@ -50,18 +51,25 @@ sub new {
         cgi           => new CGI,
         logger        => Koha::Logger->get( { category => 'Koha.Plugin.Com.PTFSEurope.HLISD.Lib.API' } ),
         base_url      => $base_url,
-        plugin_config => $plugin_config
+        plugin_config => $plugin_config,
+        auth          => undef,
     };
 
     bless $self, $class;
 
-    use Data::Dumper;
-    $Data::Dumper::Maxdepth = 2;
-    warn Dumper( '##### 1 #######################################################line: ' . __LINE__ );
-    warn Dumper( $self->Authenticate() );
-    warn Dumper('##### end1 #######################################################');
-
     return $self;
+}
+
+=head3 LibraryDetails
+
+Make a call to /api/v1/libraries/{id}
+
+=cut
+
+sub LibraryDetails {
+    my ($self, $library_id) = @_;
+
+    return $self->_make_request( 'GET', 'libraries/'.$library_id );
 }
 
 =head3 Authenticate
@@ -78,27 +86,42 @@ sub Authenticate {
         password => $self->{plugin_config}->{password},
     };
 
-    return $self->_make_request( 'POST', 'auth/login', $data, undef );
+    return $self->_make_request( 'POST', 'auth/login', $data );
 }
 
 # Makes a request to a specified endpoint using the provided method and payload data.
+# 
 # Parameters:
 #   $method: The HTTP method for the request.
 #   $endpoint_url: The URL endpoint to make the request to.
+#   $payload: The payload data to send with the request.
+# 
 # Return: The response from the endpoint.
 sub _make_request {
-    my ( $self, $method, $endpoint_url, $payload, $header ) = @_;
+    my ( $self, $method, $endpoint_url, $payload ) = @_;
 
-    # If token exists and is valid, use token
+    my $header;
+    unless ($endpoint_url eq 'auth/login') {
 
-    #TODO:
+        $self->{auth} = $self->Authenticate() unless $self->{auth};
 
-    # Else, authenticate and fetch token
+        my $now_time = dt_from_string;
+        my $token_exp_day = substr $self->{auth}->{exp}, 3, 2;
+        my $token_exp_month = substr $self->{auth}->{exp}, 0, 2;
+        my $token_exp_year = substr $self->{auth}->{exp}, 6, 4;
+        my $token_exp_hour = substr $self->{auth}->{exp}, 11, 2;
+        my $token_exp_min = substr $self->{auth}->{exp}, 14, 2;
+        my $token_exp_dt = dt_from_string($token_exp_year . '-' . $token_exp_month . '-' . $token_exp_day . ' ' . $token_exp_hour . ':' . $token_exp_min);
+
+        $self->{auth} = $self->Authenticate() if ( $now_time->epoch > $token_exp_dt->epoch );
+
+        $header = HTTP::Headers->new( Authorization => 'Bearer ' . $self->{auth}->{token} );
+    }
 
     my $uri = URI->new( $self->{base_url} . '/' . $endpoint_url );
     $uri->query_form($payload);
 
-    my $request  = HTTP::Request->new( $method => $uri );
+    my $request  = HTTP::Request->new( $method, $uri, $header, undef );
     my $ua       = LWP::UserAgent->new;
     my $response = $ua->request($request);
 
