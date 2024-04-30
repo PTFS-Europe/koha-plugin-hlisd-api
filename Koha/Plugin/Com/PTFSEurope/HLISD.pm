@@ -112,8 +112,6 @@ It takes an optional C<$args> parameter, which is a hashref with the following k
 
 =over
 
-=item * C<dry_run>: a boolean indicating whether the script is being run in dry-run mode
-
 =item * C<debug>: a boolean indicating whether debugging messages should be printed
 
 =back

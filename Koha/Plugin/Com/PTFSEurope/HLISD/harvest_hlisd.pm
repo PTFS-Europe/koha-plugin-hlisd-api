@@ -27,12 +27,10 @@ use Koha::Plugin::Com::PTFSEurope::HLISD;
 
 # Command line option values
 my $get_help   = 0;
-my $dry_run    = 0;
 my $debug      = 0;
 
 my $options = GetOptions(
     'h|help'       => \$get_help,
-    'dry-run'      => \$dry_run,
     'debug'        => \$debug
 );
 
@@ -43,7 +41,6 @@ if ($get_help) {
 
 Koha::Plugin::Com::PTFSEurope::HLISD->new()->harvest_hlisd(
     {
-        dry_run => $dry_run,
         debug   => $debug
     }
 );
@@ -54,11 +51,10 @@ $0: Run a HLISD harvest
 
 Parameters:
     --help or -h                         get help
-    --dry-run                            only produce a run report, without actually doing anything permanent
     --debug                              print additional debugging info during run
 
 Usage example:
-./misc/cronjobs/harvest_hlisd.pl --debug --dry-run
+./misc/cronjobs/harvest_hlisd.pl --debug
 
 HELP
 }
