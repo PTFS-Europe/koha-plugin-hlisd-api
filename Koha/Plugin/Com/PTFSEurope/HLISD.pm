@@ -203,14 +203,13 @@ sub _get_patrons {
     my ($self) = @_;
 
     my $partner_code = C4::Context->preference('ILLPartnerCode');
-    unless ($partner_code) {
-        die "No ILL partner code set. Please set the ILLPartnerCode system preference.";
-    }
+    die "No ILL partner code set. Please set the ILLPartnerCode system preference." unless $partner_code;
 
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
-    unless ( scalar @{ $patrons->as_list() } ) {
-        die "No ILL partner patrons found.";
-    }
+    die "No ILL partner patrons found." unless scalar @{ $patrons->as_list() };
+
+    $patrons = $patrons->filter_by_attribute_type( $self->{config}->{toupdatefield} );
+    die "No ILL partner patrons to update." unless scalar @{ $patrons->as_list() };
 
     return $patrons;
 }
