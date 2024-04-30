@@ -71,15 +71,15 @@
             <input id="hlisd_libraryidfield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="libraryidfield" value="[% config.libraryidfield | html %]">
             <p>The Koha patron attribute type code used to match the patron with the HLISD library id field.</p>
         </div>
-        <div id="hlisd_toupdate" class="config_field">
-            <label for="hlisd_toupdate_input"><strong>To update</strong> field: </label>
-            <input id="hlisd_toupdate_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="toupdate" value="[% config.toupdate | html %]">
+        <div id="hlisd_toupdatefield" class="config_field">
+            <label for="hlisd_toupdatefield_input"><strong>To update</strong> field: </label>
+            <input id="hlisd_toupdatefield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="toupdatefield" value="[% config.toupdatefield | html %]">
             <p>The Koha patron attribute type code used to determine if a patron should be updated by HLISD data or not.</p>
         </div>
-        <div id="hlisd_changelog" class="config_field">
-            <label for="hlisd_changelog_input"><strong>Change log</strong> field: </label>
-            <input id="hlisd_changelog_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="changelog" value="[% config.changelog | html %]">
-            <p>The Koha patron attribute type code used to store the HLISD changes for a patron.</p>
+        <div id="hlisd_changelogfield" class="config_field">
+            <label for="hlisd_changelogfield_input"><strong>Change log</strong> field: </label>
+            <input id="hlisd_changelogfield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="changelogfield" value="[% config.changelogfield | html %]">
+            <p>The Koha patron attribute type code used to store the HLISD changes for a patron. Please note this field should be repeatable.</p>
         </div>
 
         <input type="hidden" name="save" value="1" />
