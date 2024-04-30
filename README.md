@@ -7,7 +7,7 @@ It also utilizes patron attribute types to govern the harvest logic.
 
 ## Dev and setup
 
-The script at `misc4dev/test_config.pl` creates the required patron attribute types for testing.
+The script at `misc4dev/populate_patron_attribute_types.pl` creates the required patron attribute types for testing/dev.
 
 To run the cron script to harvest data from HLISD:
 
