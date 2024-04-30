@@ -4,18 +4,19 @@ use Modern::Perl;
 use strict;
 use warnings;
 
-use base            qw(Koha::Plugins::Base);
-use Koha::DateUtils qw( dt_from_string );
+use base qw(Koha::Plugins::Base);
 
 use JSON           qw( encode_json decode_json );
 use File::Basename qw( dirname );
-use C4::Installer;
-use Cwd qw(abs_path);
+use Cwd            qw(abs_path);
 use CGI;
-use JSON qw( decode_json );
+
+use C4::Installer;
 use C4::Context;
 
 use Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API;
+use Koha::DateUtils qw( dt_from_string );
+use Koha::Patron::Attributes;
 
 our $VERSION = "1.0.0";
 
@@ -115,7 +116,8 @@ sub harvest_hlisd {
 
     debug_msg(
         $args->{debug},
-        sprintf( "Found %d %s patrons", $patrons->count(), C4::Context->preference('ILLPartnerCode') ));
+        sprintf( "Found %d %s patrons", $patrons->count(), C4::Context->preference('ILLPartnerCode') )
+    );
 
     while ( my $patron = $patrons->next ) {
 
@@ -202,12 +204,12 @@ sub _get_patrons {
 
     my $partner_code = C4::Context->preference('ILLPartnerCode');
     unless ($partner_code) {
-        die "ERROR: No ILL partner code set. Please set the ILLPartnerCode system preference.";
+        die "No ILL partner code set. Please set the ILLPartnerCode system preference.";
     }
 
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
     unless ( scalar @{ $patrons->as_list() } ) {
-        die "ERROR: No ILL partner patrons found.";
+        die "No ILL partner patrons found.";
     }
 
     return $patrons;
@@ -230,11 +232,23 @@ sub _config_check {
 
     my $config = $self->{config};
 
-    unless ( $config->{email} && $config->{password} ) {
-        die "HL-ISD API credentials not set, skipping harvest";
-    }
+    die "HL-ISD API email not set"    unless $config->{email};
+    die "HL-ISD API password not set" unless $config->{password};
 
-    
+    die "Patron attribute type field for 'Library ID' not set" unless $config->{libraryidfield};
+    die "Patron attribute type field for 'To update' not set"  unless $config->{toupdatefield};
+    die "Patron attribute type field for 'Changelog' not set"  unless $config->{changelogfield};
+
+    die "Patron attribute type '" . $config->{libraryidfield} . "' to map to 'Library ID' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $config->{libraryidfield} } );
+
+    die "Patron attribute type '" . $config->{toupdatefield} . "' to map to 'To update' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $config->{toupdatefield} } );
+
+    die "Patron attribute type '" . $config->{changelogfield} . "' to map to 'Changelog' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $config->{changelogfield} } );
+
+
 }
 
 1;
