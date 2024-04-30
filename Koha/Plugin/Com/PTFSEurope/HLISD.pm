@@ -248,6 +248,8 @@ sub _config_check {
     die "Patron attribute type '" . $config->{changelogfield} . "' to map to 'Changelog' not found"
         unless Koha::Patron::Attribute::Types->find( { code => $config->{changelogfield} } );
 
+    die "Patron attribute type '" . $config->{changelogfield} . "' to map to 'Changelog' is not repeatable"
+        unless Koha::Patron::Attribute::Types->find( { code => $config->{changelogfield} } )->repeatable;
 
 }
 
