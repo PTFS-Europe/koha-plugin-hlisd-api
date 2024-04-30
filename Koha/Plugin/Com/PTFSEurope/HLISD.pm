@@ -103,7 +103,20 @@ sub uninstall() {
 
 =head3 harvest_hlisd
 
-TODO: Implement the code to actually do the harvesting, see the TODO comment in the code
+This method performs the harvesting of HLISD data for patrons.
+
+It will iterate over the list of patrons using the HLISD API to retrieve their
+data, and update their patron records in Koha with the retrieved data.
+
+It takes an optional C<$args> parameter, which is a hashref with the following keys:
+
+=over
+
+=item * C<dry_run>: a boolean indicating whether the script is being run in dry-run mode
+
+=item * C<debug>: a boolean indicating whether debugging messages should be printed
+
+=back
 
 =cut
 
@@ -222,9 +235,6 @@ sub debug_msg {
 
  Retrieves patrons from the database based on the partner code set in the system preferences.
  
- Parameters:
- - $self: The object instance of the class.
- 
  Returns:
  - Koha::Patrons: A collection of patrons.
 
@@ -247,13 +257,9 @@ sub _get_patrons {
 
 =head3 _config_check
 
- Checks if the HL-ISD API credentials are set in the configuration.
- If not, it prints a debug message and returns.
+Checks that the necessary configuration has been set.
 
- Parameters:
- - $self: The object instance.
-
- Returns: None.
+Throws a die() statement if any of the necessary configuration is missing.
 
 =cut
 

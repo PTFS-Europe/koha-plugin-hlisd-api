@@ -22,7 +22,7 @@ use warnings;
 
 use LWP::UserAgent;
 use HTTP::Request;
-use JSON qw( encode_json decode_json );
+use JSON qw( decode_json );
 use CGI;
 use URI;
 
@@ -34,7 +34,7 @@ use Koha::DateUtils qw( dt_from_string );
 
 =head1 NAME
 
-ReprintsDesk - Client interface to ReprintsDesk API plugin (koha-plugin-reprintsdesk)
+HLISD - Client interface to HLISD API
 
 =cut
 
@@ -89,14 +89,14 @@ sub Authenticate {
     return $self->_make_request( 'POST', 'auth/login', $data );
 }
 
-# Makes a request to a specified endpoint using the provided method and payload data.
-#
-# Parameters:
-#   $method: The HTTP method for the request.
-#   $endpoint_url: The URL endpoint to make the request to.
-#   $payload: The payload data to send with the request.
-#
-# Return: The response from the endpoint.
+
+=head3 _make_request
+
+Make a request to the HLISD API. If the request is not for /auth/login, it will automatically call
+Authenticate before making the request.
+
+=cut
+
 sub _make_request {
     my ( $self, $method, $endpoint_url, $payload ) = @_;
 
