@@ -50,9 +50,7 @@ Koha::Plugin::Com::PTFSEurope::HLISD->new()->harvest_hlisd(
 
 sub get_help {
     print <<"HELP";
-$0: Run a SUSHI harvesting for a ERM usage data provider
-
-This script will run the SUSHI harvesting for usage data providers
+$0: Run a HLISD harvest
 
 Parameters:
     --help or -h                         get help
