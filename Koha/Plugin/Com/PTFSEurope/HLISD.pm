@@ -121,44 +121,75 @@ sub harvest_hlisd {
 
     while ( my $patron = $patrons->next ) {
 
-        #TODO: Get library id from patron attribute type configured
+        my $libraryidfield_type = $patron->get_extended_attribute( $self->{config}->{libraryidfield} );
 
-        #TODO: call LibraryDetails API
+        unless ($libraryidfield_type) {
+            debug_msg( $args->{debug}, "No library ID found for patron " . $patron->borrowernumber );
+            next;
+        }
 
-        # my $plugin = Koha::Plugin::Com::PTFSEurope::HLISD->new();
-        # my $api    = $plugin->{_api};
-        # my $res    = $api->LibraryDetails(3610);
+        my $library_id = $libraryidfield_type->attribute;
 
-        # if ( $res->is_success ) {
-        #     debug_msg(
-        #         $args->{debug},
-        #         sprintf( "Harvesting data for patron #%s - %s", $patron->borrowernumber, $patron->surname )
-        #     );
+        my $plugin = Koha::Plugin::Com::PTFSEurope::HLISD->new();
+        my $res    = $plugin->{_api}->LibraryDetails($library_id);
 
-        #     my $data = decode_json( $res->decoded_content() );
+        if ( !$res->{data} ) {
+            debug_msg(
+                $args->{debug},
+                sprintf( "Empty data returned for patron #%s - %s", $patron->borrowernumber, $patron->surname )
+            );
+            next;
+        }
 
-        #     if ( $data->{status} eq 'success' && $data->{data} ) {
-        #         $self->store_data(
-        #             {
-        #                 patron_id  => $patron->borrowernumber,
-        #                 hlisd_data => encode_json( $data->{data} ),
-        #             }
-        #         );
-        #     } else {
-        #         debug_msg(
-        #             $args->{debug},
-        #             sprintf(
-        #                 "HL-ISD API returned error for patron #%s - %s", $patron->borrowernumber, $patron->surname
-        #             )
-        #         );
-        #     }
+        debug_msg(
+            $args->{debug},
+            sprintf( "\nChecking data for patron #%s - %s", $patron->borrowernumber, $patron->surname )
+        );
 
-        # } else {
-        #     debug_msg(
-        #         $args->{debug},
-        #         sprintf( "HL-ISD API request failed for patron #%s - %s", $patron->borrowernumber, $patron->surname )
-        #     );
-        # }
+        my $mapping = $self->koha_patron_to_hlisd_mapping();
+
+        for my $mapping_item ( @{$mapping} ) {
+            my $koha_field  = ( keys %{$mapping_item} )[0];
+            my $hlisd_field = ( values %{$mapping_item} )[0];
+
+            my $koha_value = $patron->$koha_field;
+            $koha_value =~ s/^\s+|\s+$//g;
+
+            my $hlisd_value = $res->{data}->{attributes}->{$hlisd_field};
+            $hlisd_value =~ s/^\s+|\s+$//g;
+
+            debug_msg(
+                $args->{debug},
+                sprintf(
+                    "  Comparing %s (Koha) and %s (HLISD): %s vs. %s",
+                    $koha_field, $hlisd_field,
+                    ( defined $koha_value  ? $koha_value  : '(undef)' ),
+                    ( defined $hlisd_value ? $hlisd_value : '(undef)' )
+                )
+            );
+
+            unless ( defined $koha_value && defined $hlisd_value && lc $koha_value eq lc $hlisd_value ) {
+                $patron->$koha_field($hlisd_value);
+                $patron->store;
+
+                $patron->add_extended_attribute(
+                    {
+                        'code'      => $self->{config}->{changelogfield},
+                        'attribute' => sprintf(
+                            "  Updated %s from '%s' to '%s' at %s ", $koha_field, $koha_value, $hlisd_value,
+                            DateTime->now
+                        )
+                    }
+                );
+
+                debug_msg(
+                    $args->{debug},
+                    sprintf(
+                        "  Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
+                    )
+                );
+            }
+        }
     }
 }
 
@@ -250,6 +281,54 @@ sub _config_check {
     die "Patron attribute type '" . $config->{changelogfield} . "' to map to 'Changelog' is not repeatable"
         unless Koha::Patron::Attribute::Types->find( { code => $config->{changelogfield} } )->repeatable;
 
+}
+
+=head2 koha_patron_to_hlisd_mapping
+
+ Maps the Koha borrowers column names to the names used in the HL-ISD API.
+
+ Returns a hash reference where the key is the Koha attribute name and the
+ value is the HL-ISD attribute name.
+
+ HLISD attributes example return:
+    'lms'                     => 'koha',
+    'telephone'               => '21312123',
+    'collections-description' => '',
+    'organisation'            => 'Organisation multiple word text',
+    'longitude'               => '0.98765',
+    'created-at'              => '2018-03-27T10:35:49.799Z',
+    'document-supply'         => 'ABC',
+    'email'                   => 'example@email.com',
+    'updated-at'              => '2024-03-09T12:47:43.931Z',
+    'postcode'                => 'ZIP CODE',
+    'address'                 => 'Some Address',
+    'opening-times'           => 'Mon-Fri: 9.00 - 17.00',
+    'facebook'                => '',
+    'accessibility'           => '',
+    'import-key'              => '1234',
+    'fax'                     => '',
+    'twitter'                 => 'https://twitter.com/someurl',
+    'website'                 => '',
+    'name'                    => 'Organisation name multiple word text',
+    'access-policy'           => '',
+    'directions'              => '',
+    'latitude'                => '12.12314',
+    'country'                 => 'Country',
+    'description'             => undef,
+    'region-id'               => 5
+
+=cut
+
+sub koha_patron_to_hlisd_mapping {
+    my ($self) = @_;
+
+    return [
+        { 'phone'   => 'telephone' },
+        { 'email'   => 'email' },
+        { 'address' => 'address' },
+        { 'surname' => 'name' },
+        { 'zipcode' => 'postcode' }
+    ];
 }
 
 1;
