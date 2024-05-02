@@ -60,6 +60,18 @@ sub new {
     return $self;
 }
 
+=head3 Libraries
+
+Make a call to /api/v1/libraries
+
+=cut
+
+sub Libraries {
+    my ( $self, $library_id ) = @_;
+
+    return $self->_make_request( 'GET', 'libraries' );
+}
+
 =head3 LibraryDetails
 
 Make a call to /api/v1/libraries/{id}
