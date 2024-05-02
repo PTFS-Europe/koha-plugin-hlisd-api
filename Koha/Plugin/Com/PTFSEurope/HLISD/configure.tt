@@ -76,11 +76,6 @@
             <input id="hlisd_toupdatefield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="toupdatefield" value="[% config.toupdatefield | html %]">
             <p>The Koha patron attribute type code used to determine if a patron should be updated by HLISD data or not.</p>
         </div>
-        <div id="hlisd_changelogfield" class="config_field">
-            <label for="hlisd_changelogfield_input"><strong>Change log</strong> field: </label>
-            <input id="hlisd_changelogfield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="changelogfield" value="[% config.changelogfield | html %]">
-            <p>The Koha patron attribute type code used to store the HLISD changes for a patron. Please note this field should be repeatable.</p>
-        </div>
 
         <input type="hidden" name="save" value="1" />
         <input id="submit_button" type="submit" value="Save configuration" />

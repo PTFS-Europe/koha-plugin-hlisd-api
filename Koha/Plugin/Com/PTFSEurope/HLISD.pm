@@ -183,16 +183,6 @@ sub harvest_hlisd {
                 $patron->$koha_field($hlisd_value);
                 $patron->store;
 
-                $patron->add_extended_attribute(
-                    {
-                        'code'      => $self->{config}->{changelogfield},
-                        'attribute' => sprintf(
-                            "  Updated %s from '%s' to '%s' at %s ", $koha_field, $koha_value, $hlisd_value,
-                            DateTime->now
-                        )
-                    }
-                );
-
                 debug_msg(
                     $args->{debug},
                     sprintf(
@@ -271,19 +261,12 @@ sub _config_check {
 
     die "Patron attribute type field for 'Library ID' not set" unless $config->{libraryidfield};
     die "Patron attribute type field for 'To update' not set"  unless $config->{toupdatefield};
-    die "Patron attribute type field for 'Changelog' not set"  unless $config->{changelogfield};
 
     die "Patron attribute type '" . $config->{libraryidfield} . "' to map to 'Library ID' not found"
         unless Koha::Patron::Attribute::Types->find( { code => $config->{libraryidfield} } );
 
     die "Patron attribute type '" . $config->{toupdatefield} . "' to map to 'To update' not found"
         unless Koha::Patron::Attribute::Types->find( { code => $config->{toupdatefield} } );
-
-    die "Patron attribute type '" . $config->{changelogfield} . "' to map to 'Changelog' not found"
-        unless Koha::Patron::Attribute::Types->find( { code => $config->{changelogfield} } );
-
-    die "Patron attribute type '" . $config->{changelogfield} . "' to map to 'Changelog' is not repeatable"
-        unless Koha::Patron::Attribute::Types->find( { code => $config->{changelogfield} } )->repeatable;
 
 }
 

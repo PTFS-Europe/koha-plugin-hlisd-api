@@ -26,17 +26,4 @@ try {
     print "Error: $_\n";
 };
 
-try {
-    Koha::Patron::Attribute::Type->new(
-        {
-            code        => 'hlisd_chan',
-            description =>
-                'Field to be used by HLISD plugin to store HLISD changelog',
-            repeatable  => 1
-        }
-    )->store;
-} catch {
-    print "Error: $_\n";
-};
-
 1;
