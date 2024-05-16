@@ -237,10 +237,21 @@ sub _get_patrons {
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless scalar @{ $patrons->as_list() };
 
-    $patrons = $patrons->filter_by_attribute_type( $self->{config}->{toupdatefield} );
-    die "No ILL partner patrons to update." unless scalar @{ $patrons->as_list() };
+    my $patrons_to_update = Koha::Patron::Attributes->search(
+        {
+            'me.code'      => $self->{config}->{toupdatefield},
+            'me.attribute' => 1
+        },
+        { join => 'borrower_attribute_types' }
+    )->_resultset()->search_related('borrowernumber');
+    die "No patron records set to update." unless $patrons_to_update->count;
 
-    return $patrons;
+    my $ill_partner_patrons = $patrons_to_update->search( { categorycode => $partner_code } );
+    die "No ILL partner patrons found." unless $ill_partner_patrons->count;
+
+    my $patrons_to_return = Koha::Patrons->_new_from_dbic($ill_partner_patrons);
+
+    return $patrons_to_return;
 }
 
 =head3 _config_check
