@@ -6,20 +6,20 @@ use Koha::Patron::Attribute::Type;
 try {
     Koha::Patron::Attribute::Type->new(
         {
-            code => 'hlisd_id',
-            description => 'Field to be used by HLISD plugin to match on library id'
+            code        => 'hlisd_id',
+            description => 'This record\'s ID in HLISD'
         }
     )->store;
 } catch {
     print "Error: $_\n";
 };
 
-try { 
+try {
     Koha::Patron::Attribute::Type->new(
         {
-            code        => 'hlisd_toup',
-            description =>
-                'Field to be used by HLISD plugin to determine if update should happen or not for a given patron'
+            code                      => 'hlisd_update',
+            description               => 'Perform HLISD update?',
+            authorised_value_category => 'YES_NO'
         }
     )->store;
 } catch {
