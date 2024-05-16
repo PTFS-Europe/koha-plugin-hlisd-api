@@ -11,6 +11,7 @@ use File::Basename qw( dirname );
 use Cwd            qw(abs_path);
 use CGI;
 
+use Term::ANSIColor;
 use C4::Installer;
 use C4::Context;
 
@@ -172,10 +173,10 @@ sub harvest_hlisd {
             debug_msg(
                 $args->{debug},
                 sprintf(
-                    "  Comparing %s (Koha) and %s (HLISD): %s vs. %s",
-                    $koha_field, $hlisd_field,
-                    ( defined $koha_value  ? $koha_value  : '(undef)' ),
-                    ( defined $hlisd_value ? $hlisd_value : '(undef)' )
+                    "  Comparing '%s' (%s) and '%s' (%s): %s and %s",
+                    $koha_field, colored( 'Koha', 'green' ), $hlisd_field, colored( 'HLISD', 'blue' ),
+                    ( defined $koha_value ? colored( $koha_value, 'green' ) : '(undef)' ),
+                    ( defined $hlisd_value ? colored( $hlisd_value, 'blue') : '(undef)' )
                 )
             );
 
@@ -185,8 +186,9 @@ sub harvest_hlisd {
 
                 debug_msg(
                     $args->{debug},
+                    colored( "  MISMATCH: ", 'yellow' ) .
                     sprintf(
-                        "  Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
+                         "Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
                     )
                 );
             }
