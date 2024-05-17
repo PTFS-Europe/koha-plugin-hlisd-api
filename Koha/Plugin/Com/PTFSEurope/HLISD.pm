@@ -176,8 +176,8 @@ sub harvest_hlisd {
                 sprintf(
                     "  Comparing '%s' (%s) and '%s' (%s): %s and %s",
                     $koha_field, colored( 'Koha', 'green' ), $hlisd_field, colored( 'HLISD', 'blue' ),
-                    ( defined $koha_value ? colored( $koha_value, 'green' ) : '(undef)' ),
-                    ( defined $hlisd_value ? colored( $hlisd_value, 'blue') : '(undef)' )
+                    ( defined $koha_value  ? colored( $koha_value,  'green' ) : '(undef)' ),
+                    ( defined $hlisd_value ? colored( $hlisd_value, 'blue' )  : '(undef)' )
                 )
             );
 
@@ -187,10 +187,10 @@ sub harvest_hlisd {
 
                 debug_msg(
                     $args->{debug},
-                    colored( "  MISMATCH: ", 'yellow' ) .
-                    sprintf(
-                         "Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
-                    )
+                    colored( "  MISMATCH: ", 'yellow' )
+                        . sprintf(
+                        "Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
+                        )
                 );
             }
         }
