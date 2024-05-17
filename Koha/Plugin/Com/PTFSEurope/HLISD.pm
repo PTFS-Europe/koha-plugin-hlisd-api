@@ -122,7 +122,8 @@ It takes an optional C<$args> parameter, which is a hashref with the following k
 sub harvest_hlisd {
     my ( $self, $args ) = @_;
 
-    $self->_config_check();
+    $self->plugin_config_check();
+    $self->patron_attribute_types_check();
 
     my $patrons = $self->_get_patrons();
 
@@ -256,31 +257,40 @@ sub _get_patrons {
     return $patrons_to_return;
 }
 
-=head3 _config_check
+=head3 plugin_config_check
 
-Checks that the necessary configuration has been set.
+Checks that the necessary plugin configuration has been set.
 
 Throws a die() statement if any of the necessary configuration is missing.
 
 =cut
 
-sub _config_check {
+sub plugin_config_check {
     my ($self) = @_;
 
-    my $config = $self->{config};
+    die "HLISD API email not set"    unless $self->{config}->{email};
+    die "HLISD API password not set" unless $self->{config}->{password};
 
-    die "HLISD API email not set"    unless $config->{email};
-    die "HLISD API password not set" unless $config->{password};
+    die "Patron attribute type field for 'Library ID' not set" unless $self->{config}->{libraryidfield};
+    die "Patron attribute type field for 'To update' not set"  unless $self->{config}->{toupdatefield};
+}
 
-    die "Patron attribute type field for 'Library ID' not set" unless $config->{libraryidfield};
-    die "Patron attribute type field for 'To update' not set"  unless $config->{toupdatefield};
+=head3 patron_attribute_types_check
 
-    die "Patron attribute type '" . $config->{libraryidfield} . "' to map to 'Library ID' not found"
-        unless Koha::Patron::Attribute::Types->find( { code => $config->{libraryidfield} } );
+Checks that the necessary patron attribute types have been set.
 
-    die "Patron attribute type '" . $config->{toupdatefield} . "' to map to 'To update' not found"
-        unless Koha::Patron::Attribute::Types->find( { code => $config->{toupdatefield} } );
+Throws a die() statement if any of the necessary patron attribute types is missing.
 
+=cut
+
+sub patron_attribute_types_check {
+    my ($self) = @_;
+
+    die "Patron attribute type '" . $self->{config}->{libraryidfield} . "' to map to 'Library ID' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{libraryidfield} } );
+
+    die "Patron attribute type '" . $self->{config}->{toupdatefield} . "' to map to 'To update' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{toupdatefield} } );
 }
 
 =head2 koha_patron_to_hlisd_mapping
