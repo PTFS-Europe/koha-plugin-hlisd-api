@@ -9,8 +9,10 @@ my $ill_partner_category = C4::Context->preference('ILLPartnerCode') || 'IL';
 try {
     Koha::Patron::Attribute::Type->new(
         {
-            code        => 'hlisd_id',
-            description => 'This record\'s ID in HLISD'
+            code          => 'hlisd_id',
+            description   => 'This record\'s ID in HLISD',
+            class         => 'HLISD',
+            category_code => $ill_partner_category
         }
     )->store;
 } catch {
@@ -22,7 +24,9 @@ try {
         {
             code                      => 'hlisd_update',
             description               => 'Perform HLISD update?',
-            authorised_value_category => 'YES_NO'
+            authorised_value_category => 'YES_NO',
+            class                     => 'HLISD',
+            category_code             => $ill_partner_category
         }
     )->store;
 } catch {
