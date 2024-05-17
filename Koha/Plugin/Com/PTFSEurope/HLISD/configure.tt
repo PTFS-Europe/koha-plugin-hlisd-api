@@ -61,8 +61,8 @@
         </div>
         <div id="hlisd_password" class="config_field">
             <label for="hlisd_password_input">Password: </label>
-            <input id="hlisd_password_input" class="required_input" placeholder="Enter password" type="text" name="password" value="[% config.password | html %]">
-            <p>The password to be used for accessing the HLISDAPI</p>
+            <input id="hlisd_password_input" class="required_input" placeholder="Enter password" type="password" name="password" value="[% config.password | html %]">
+            <p>The password to be used for accessing the HLISD API</p>
         </div>
 
         <h4 class="section_header">Patron attribute types configuration</h4>
