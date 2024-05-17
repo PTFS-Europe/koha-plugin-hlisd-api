@@ -25,7 +25,7 @@ our $metadata = {
     name            => 'HLISD API',
     author          => 'PTFS-Europe',
     date_authored   => '2024-04-26',
-    date_updated    => '2024-04-26',
+    date_updated    => '2024-05-17',
     minimum_version => '24.05.00.000',
     maximum_version => undef,
     version         => $VERSION,
@@ -269,8 +269,8 @@ sub _config_check {
 
     my $config = $self->{config};
 
-    die "HL-ISD API email not set"    unless $config->{email};
-    die "HL-ISD API password not set" unless $config->{password};
+    die "HLISD API email not set"    unless $config->{email};
+    die "HLISD API password not set" unless $config->{password};
 
     die "Patron attribute type field for 'Library ID' not set" unless $config->{libraryidfield};
     die "Patron attribute type field for 'To update' not set"  unless $config->{toupdatefield};
@@ -285,10 +285,10 @@ sub _config_check {
 
 =head2 koha_patron_to_hlisd_mapping
 
- Maps the Koha borrowers column names to the names used in the HL-ISD API.
+ Maps the Koha borrowers column names to the names used in the HLISD API.
 
  Returns a hash reference where the key is the Koha attribute name and the
- value is the HL-ISD attribute name.
+ value is the HLISD attribute name.
 
  HLISD attributes example return:
     'lms'                     => 'koha',
