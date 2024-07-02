@@ -50,9 +50,11 @@ sub new {
     ## and returns our actual $self
     my $self = $class->SUPER::new($args);
 
-    $self->{config} = decode_json( $self->retrieve_data('hlisd_config') || '{}' );
+    $self->{config} =
+      decode_json( $self->retrieve_data('hlisd_config') || '{}' );
 
-    my $api = Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API->new( $self->{config} );
+    my $api =
+      Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API->new( $self->{config} );
     $self->{_api} = $api;
 
     $self->{debug} = $args->{debug};
@@ -75,13 +77,13 @@ sub configure {
         my $template = $self->get_template( { file => 'configure.tt' } );
 
         ## Grab the values we already have for our settings, if any exist
-        $template->param(
-            config => $self->{config},
-        );
+        $template->param( config => $self->{config}, );
 
         $self->output_html( $template->output() );
-    } else {
-        my $hashed = { map { $_ => ( scalar $cgi->param($_) )[0] } $cgi->param };
+    }
+    else {
+        my $hashed =
+          { map { $_ => ( scalar $cgi->param($_) )[0] } $cgi->param };
 
         $self->store_data( { hlisd_config => scalar encode_json($hashed) } );
         $self->go_home();
@@ -96,7 +98,8 @@ sub upgrade {
     my ( $self, $args ) = @_;
 
     my $dt = dt_from_string();
-    $self->store_data( { last_upgraded => $dt->ymd('-') . ' ' . $dt->hms(':') } );
+    $self->store_data(
+        { last_upgraded => $dt->ymd('-') . ' ' . $dt->hms(':') } );
 
     return 1;
 }
@@ -105,10 +108,9 @@ sub uninstall() {
     return 1;
 }
 
-
 =head3 harvest_list
 
-Method that handles a harvest of patron or library data from HLISD
+Method that handles a HLISD harvest
 
 =cut
 
@@ -121,13 +123,22 @@ sub harvest_hlisd {
     if ( $self->{mode} eq 'patron' ) {
         $self->harvest_patrons();
     }
-    elsif ( $mode eq 'library' ) {
+    elsif ( $self->{mode} eq 'library' ) {
         $self->harvest_libraries();
     }
     else {
-        $self->log->error("Invalid harvest mode: $mode");
+        $self->log->error( "Invalid harvest mode: " . $self->{mode} );
     }
 }
+
+=head3 harvest_patrons
+
+Method that handles a HLISD patron harvest
+
+This method retrieves a list of patrons from the HLISD API and updates
+their attributes based on the mapping between Koha and HLISD fields.
+
+=cut
 
 sub harvest_patrons {
     my ($self) = @_;
@@ -262,7 +273,9 @@ sub _get_patrons {
     my ($self) = @_;
 
     my $partner_code = C4::Context->preference('ILLPartnerCode');
-    die "No ILL partner code set. Please set the ILLPartnerCode system preference." unless $partner_code;
+    die
+"No ILL partner code set. Please set the ILLPartnerCode system preference."
+      unless $partner_code;
 
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless scalar @{ $patrons->as_list() };
@@ -276,7 +289,8 @@ sub _get_patrons {
     )->_resultset()->search_related('borrowernumber');
     die "No patron records set to update." unless $patrons_to_update->count;
 
-    my $ill_partner_patrons = $patrons_to_update->search( { categorycode => $partner_code } );
+    my $ill_partner_patrons =
+      $patrons_to_update->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless $ill_partner_patrons->count;
 
     my $patrons_to_return = Koha::Patrons->_new_from_dbic($ill_partner_patrons);
@@ -298,9 +312,11 @@ sub plugin_config_check {
     die "HLISD API email not set"    unless $self->{config}->{email};
     die "HLISD API password not set" unless $self->{config}->{password};
 
-    if( $self->{mode} eq 'patron' ) {
-        die "Patron attribute type field for 'Library ID' not set" unless $self->{config}->{libraryidfield};
-        die "Patron attribute type field for 'To update' not set"  unless $self->{config}->{toupdatefield};
+    if ( $self->{mode} eq 'patron' ) {
+        die "Patron attribute type field for 'Library ID' not set"
+          unless $self->{config}->{libraryidfield};
+        die "Patron attribute type field for 'To update' not set"
+          unless $self->{config}->{toupdatefield};
     }
 }
 
@@ -315,21 +331,27 @@ Throws a die() statement if any of the necessary patron attribute types is missi
 sub patron_attribute_types_check {
     my ($self) = @_;
 
-    die "Patron attribute type '" . $self->{config}->{libraryidfield} . "' to map to 'Library ID' not found"
-        unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{libraryidfield} } );
+    die "Patron attribute type '"
+      . $self->{config}->{libraryidfield}
+      . "' to map to 'Library ID' not found"
+      unless Koha::Patron::Attribute::Types->find(
+        { code => $self->{config}->{libraryidfield} } );
 
-    die "Patron attribute type '" . $self->{config}->{toupdatefield} . "' to map to 'To update' not found"
-        unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{toupdatefield} } );
+    die "Patron attribute type '"
+      . $self->{config}->{toupdatefield}
+      . "' to map to 'To update' not found"
+      unless Koha::Patron::Attribute::Types->find(
+        { code => $self->{config}->{toupdatefield} } );
 }
 
 =head3 koha_patron_to_hlisd_mapping
 
- Maps the Koha borrowers column names to the names used in the HLISD API.
+Maps the Koha borrowers column names to the names used in the HLISD API.
 
- Returns a hash reference where the key is the Koha attribute name and the
- value is the HLISD attribute name.
+Returns a hash reference where the key is the Koha attribute name and the
+value is the HLISD attribute name.
 
- HLISD attributes example return:
+HLISD attributes example return:
     'lms'                     => 'koha',
     'telephone'               => '21312123',
     'collections-description' => '',
@@ -379,13 +401,15 @@ Checks the runtime parameters and sets default values if they are not set
 sub runtime_params_check {
     my ($self) = @_;
 
-    unless ($self->{mode}) {
-        warn "Mode not specified with the -m or --mode option ('library' or 'patron'). Defaulting to 'library'";
+    unless ( $self->{mode} ) {
+        warn
+"Mode not specified with the -m or --mode option ('library' or 'patron'). Defaulting to 'library'";
         $self->{mode} = 'library';
     }
 
-    unless ($self->{mode} eq 'patron' || $self->{mode} eq 'library') {
-        warn "Invalid mode supplied ('library' or 'patron' is expected). Defaulting to 'library'";
+    unless ( $self->{mode} eq 'patron' || $self->{mode} eq 'library' ) {
+        warn
+"Invalid mode supplied ('library' or 'patron' is expected). Defaulting to 'library'";
         $self->{mode} = 'library';
     }
 }
