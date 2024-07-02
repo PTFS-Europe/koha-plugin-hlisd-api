@@ -105,58 +105,73 @@ sub uninstall() {
     return 1;
 }
 
-=head3 harvest_hlisd
 
-This method performs the harvesting of HLISD data for patrons.
+=head3 harvest_list
 
-It will iterate over the list of patrons using the HLISD API to retrieve their
-data, and update their patron records in Koha with the retrieved data.
-
-It takes an optional C<$args> parameter, which is a hashref with the following keys:
-
-=over
-
-=item * C<debug>: a boolean indicating whether debugging messages should be printed
-
-=back
+Method that handles a harvest of patron or library data from HLISD
 
 =cut
 
 sub harvest_hlisd {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
     $self->runtime_params_check();
     $self->plugin_config_check();
+
+    if ( $self->{mode} eq 'patron' ) {
+        $self->harvest_patrons();
+    }
+    elsif ( $mode eq 'library' ) {
+        $self->harvest_libraries();
+    }
+    else {
+        $self->log->error("Invalid harvest mode: $mode");
+    }
+}
+
+sub harvest_patrons {
+    my ($self) = @_;
     $self->patron_attribute_types_check();
 
     my $patrons = $self->_get_patrons();
 
     $self->debug_msg(
-        sprintf( "Found %d %s patrons", $patrons->count(), C4::Context->preference('ILLPartnerCode') )
+        sprintf(
+            "Found %d %s patrons",
+            $patrons->count(), C4::Context->preference('ILLPartnerCode')
+        )
     );
 
     while ( my $patron = $patrons->next ) {
 
-        my $libraryidfield_type = $patron->get_extended_attribute( $self->{config}->{libraryidfield} );
+        my $libraryidfield_type =
+          $patron->get_extended_attribute( $self->{config}->{libraryidfield} );
 
         unless ($libraryidfield_type) {
-            $self->debug_msg( "No library ID found for patron " . $patron->borrowernumber );
+            $self->debug_msg(
+                "No library ID found for patron " . $patron->borrowernumber );
             next;
         }
 
         my $library_id = $libraryidfield_type->attribute;
 
-        my $res    = $self->{_api}->LibraryDetails($library_id);
+        my $res = $self->{_api}->LibraryDetails($library_id);
 
         if ( !$res->{data} ) {
             $self->debug_msg(
-                sprintf( "Empty data returned for patron #%s - %s", $patron->borrowernumber, $patron->surname )
+                sprintf(
+                    "Empty data returned for patron #%s - %s",
+                    $patron->borrowernumber, $patron->surname
+                )
             );
             next;
         }
 
         $self->debug_msg(
-            sprintf( "\nChecking data for patron #%s - %s", $patron->borrowernumber, $patron->surname )
+            sprintf(
+                "\nChecking data for patron #%s - %s",
+                $patron->borrowernumber, $patron->surname
+            )
         );
 
         my $mapping = $self->koha_patron_to_hlisd_mapping();
@@ -174,21 +189,35 @@ sub harvest_hlisd {
             $self->debug_msg(
                 sprintf(
                     "  Comparing '%s' (%s) and '%s' (%s): %s and %s",
-                    $koha_field, colored( 'Koha', 'green' ), $hlisd_field, colored( 'HLISD', 'blue' ),
-                    ( defined $koha_value  ? colored( $koha_value,  'green' ) : '(undef)' ),
-                    ( defined $hlisd_value ? colored( $hlisd_value, 'blue' )  : '(undef)' )
+                    $koha_field,
+                    colored( 'Koha', 'green' ),
+                    $hlisd_field,
+                    colored( 'HLISD', 'blue' ),
+                    (
+                        defined $koha_value ? colored( $koha_value, 'green' )
+                        : '(undef)'
+                    ),
+                    (
+                        defined $hlisd_value ? colored( $hlisd_value, 'blue' )
+                        : '(undef)'
+                    )
                 )
             );
 
-            unless ( defined $koha_value && defined $hlisd_value && lc $koha_value eq lc $hlisd_value ) {
+            unless ( defined $koha_value
+                && defined $hlisd_value
+                && lc $koha_value eq lc $hlisd_value )
+            {
                 $patron->$koha_field($hlisd_value);
                 $patron->store;
 
                 $self->debug_msg(
                     colored( "  MISMATCH: ", 'yellow' )
-                        . sprintf(
-                        "Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
-                        )
+                      . sprintf(
+                        "Updated %s for patron #%s - %s",
+                        $koha_field, $patron->borrowernumber,
+                        $patron->surname
+                      )
                 );
             }
         }
