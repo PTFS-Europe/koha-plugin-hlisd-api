@@ -269,8 +269,10 @@ sub plugin_config_check {
     die "HLISD API email not set"    unless $self->{config}->{email};
     die "HLISD API password not set" unless $self->{config}->{password};
 
-    die "Patron attribute type field for 'Library ID' not set" unless $self->{config}->{libraryidfield};
-    die "Patron attribute type field for 'To update' not set"  unless $self->{config}->{toupdatefield};
+    if( $self->{mode} eq 'patron' ) {
+        die "Patron attribute type field for 'Library ID' not set" unless $self->{config}->{libraryidfield};
+        die "Patron attribute type field for 'To update' not set"  unless $self->{config}->{toupdatefield};
+    }
 }
 
 =head3 patron_attribute_types_check
