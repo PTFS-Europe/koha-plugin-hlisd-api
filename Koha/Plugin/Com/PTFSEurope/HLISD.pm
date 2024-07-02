@@ -55,6 +55,9 @@ sub new {
     my $api = Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API->new( $self->{config} );
     $self->{_api} = $api;
 
+    $self->{debug} = $args->{debug};
+    $self->{mode}  = $args->{mode};
+
     return $self;
 }
 
@@ -120,15 +123,14 @@ It takes an optional C<$args> parameter, which is a hashref with the following k
 =cut
 
 sub harvest_hlisd {
-    my ( $self, $args ) = @_;
+    my ( $self ) = @_;
 
     $self->plugin_config_check();
     $self->patron_attribute_types_check();
 
     my $patrons = $self->_get_patrons();
 
-    debug_msg(
-        $args->{debug},
+    $self->debug_msg(
         sprintf( "Found %d %s patrons", $patrons->count(), C4::Context->preference('ILLPartnerCode') )
     );
 
@@ -137,7 +139,7 @@ sub harvest_hlisd {
         my $libraryidfield_type = $patron->get_extended_attribute( $self->{config}->{libraryidfield} );
 
         unless ($libraryidfield_type) {
-            debug_msg( $args->{debug}, "No library ID found for patron " . $patron->borrowernumber );
+            $self->debug_msg( "No library ID found for patron " . $patron->borrowernumber );
             next;
         }
 
@@ -147,15 +149,13 @@ sub harvest_hlisd {
         my $res    = $plugin->{_api}->LibraryDetails($library_id);
 
         if ( !$res->{data} ) {
-            debug_msg(
-                $args->{debug},
+            $self->debug_msg(
                 sprintf( "Empty data returned for patron #%s - %s", $patron->borrowernumber, $patron->surname )
             );
             next;
         }
 
-        debug_msg(
-            $args->{debug},
+        $self->debug_msg(
             sprintf( "\nChecking data for patron #%s - %s", $patron->borrowernumber, $patron->surname )
         );
 
@@ -171,8 +171,7 @@ sub harvest_hlisd {
             my $hlisd_value = $res->{data}->{attributes}->{$hlisd_field};
             $hlisd_value =~ s/^\s+|\s+$//g;
 
-            debug_msg(
-                $args->{debug},
+            $self->debug_msg(
                 sprintf(
                     "  Comparing '%s' (%s) and '%s' (%s): %s and %s",
                     $koha_field, colored( 'Koha', 'green' ), $hlisd_field, colored( 'HLISD', 'blue' ),
@@ -185,8 +184,7 @@ sub harvest_hlisd {
                 $patron->$koha_field($hlisd_value);
                 $patron->store;
 
-                debug_msg(
-                    $args->{debug},
+                $self->debug_msg(
                     colored( "  MISMATCH: ", 'yellow' )
                         . sprintf(
                         "Updated %s for patron #%s - %s", $koha_field, $patron->borrowernumber, $patron->surname
@@ -209,9 +207,9 @@ sub harvest_hlisd {
 =cut
 
 sub debug_msg {
-    my ( $debug, $msg ) = @_;
+    my ( $self, $msg ) = @_;
 
-    if ( !$debug ) {
+    if ( !$self->{debug} ) {
         return;
     }
 
