@@ -145,8 +145,7 @@ sub harvest_hlisd {
 
         my $library_id = $libraryidfield_type->attribute;
 
-        my $plugin = Koha::Plugin::Com::PTFSEurope::HLISD->new();
-        my $res    = $plugin->{_api}->LibraryDetails($library_id);
+        my $res    = $self->{_api}->LibraryDetails($library_id);
 
         if ( !$res->{data} ) {
             $self->debug_msg(
