@@ -18,6 +18,8 @@ use C4::Context;
 use Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API;
 use Koha::DateUtils qw( dt_from_string );
 use Koha::Patron::Attributes;
+use Koha::Library;
+use Koha::Libraries;
 
 our $VERSION = "1.0.0";
 
@@ -131,12 +133,84 @@ sub harvest_hlisd {
     }
 }
 
+=head3 harvest_libraries
+
+Method that handles a HLISD library harvest
+
+This method retrieves a list of libraries from the HLISD API and creates
+new libraries in Koha based on the mapping between Koha and HLISD fields.
+
+DEV ONLY: Run the following SQL to delete all libraries where branchcode is numeric (this assumes that all libraries where branchcode is numeric have been imported through this method):
+    DELETE FROM branches WHERE branchcode REGEXP '^[0-9]+$';
+
+=cut
+
+sub harvest_libraries {
+    my ($self) = @_;
+
+    my $res = $self->{_api}->Libraries();
+    my $libraries = $res->{data};
+
+    my $mapping = $self->koha_library_to_hlisd_mapping();
+
+    my $i = 0;
+    foreach my $library (@$libraries) {
+        last if $i == 30;    #DEV ONLY: ONLY LOAD 30 LIBRARIES FOR TESTING
+        $i++;                #DEV ONLY: ONLY LOAD 30 LIBRARIES FOR TESTING
+
+        my $hlisd_field = $self->get_HLISD_library_field('branchname');
+        my $koha_library = Koha::Libraries->find(
+            {
+                branchcode => $library->{id}
+            }
+        );
+
+        if($koha_library){
+            $self->debug_msg(
+                sprintf(
+                    "Library %s already exists. Skipping",
+                    $library->{id}
+                )
+            );
+            next;
+        }
+
+        $self->debug_msg( sprintf( "Importing %s", $library->{id} ) );
+        my $library = Koha::Library->new(
+            {
+                branchcode => $library->{id},
+                branchname => $library->{attributes}->{$self->get_HLISD_library_field('branchname')},
+                branchaddress1 => $library->{attributes}->{$self->get_HLISD_library_field('branchaddress1')},
+                branchzip => $library->{attributes}->{$self->get_HLISD_library_field('branchzip')},
+                branchemail => $library->{attributes}->{$self->get_HLISD_library_field('branchemail')},
+                branchillemail => $library->{attributes}->{$self->get_HLISD_library_field('branchillemail')},
+                branchcountry => $library->{attributes}->{$self->get_HLISD_library_field('branchcountry')},
+                branchurl => $library->{attributes}->{$self->get_HLISD_library_field('branchurl')},
+            }
+        )->store();
+    }
+}
+
+=head3 get_HLISD_library_field
+
+Returns the value of the HLISD library field corresponding to the given Koha field.
+
+=cut
+
+sub get_HLISD_library_field {
+    my ( $self, $koha_field ) = @_;
+
+    my $mapping = $self->koha_library_to_hlisd_mapping();
+    my @hlisd_field = grep { $_->{$koha_field} } @{$mapping};
+    return $hlisd_field[0]->{$koha_field};
+}
+
 =head3 harvest_patrons
 
 Method that handles a HLISD patron harvest
 
-This method retrieves a list of patrons from the HLISD API and updates
-their attributes based on the mapping between Koha and HLISD fields.
+This method retrieves a list of libraries from the HLISD API and updates
+their respective patrons' attributes in Koha based on the mapping between Koha and HLISD fields.
 
 =cut
 
@@ -392,6 +466,30 @@ sub koha_patron_to_hlisd_mapping {
     ];
 }
 
+=head3 koha_patron_to_hlisd_mapping
+
+Maps the Koha branch column names to the names used in the HLISD API.
+
+Returns a hash reference where the key is the Koha attribute name and the
+value is the HLISD attribute name.
+
+=cut
+
+sub koha_library_to_hlisd_mapping {
+    my ($self) = @_;
+
+    return [
+        { 'branchcode'     => 'import-key' },
+        { 'branchname'     => 'name' },
+        { 'branchaddress1' => 'address' },
+        { 'branchzip'      => 'postcode' },
+        { 'branchemail'    => 'email' },
+        { 'branchillemail' => 'email' },
+        { 'branchcountry'  => 'country' },
+        { 'branchurl'      => 'website' },
+    ];
+}
+
 =head3 runtime_params_check
 
 Checks the runtime parameters and sets default values if they are not set
@@ -402,15 +500,13 @@ sub runtime_params_check {
     my ($self) = @_;
 
     unless ( $self->{mode} ) {
-        warn
-"Mode not specified with the -m or --mode option ('library' or 'patron'). Defaulting to 'library'";
         $self->{mode} = 'library';
+        say colored( "Mode not specified with the -m or --mode option ('library' or 'patron'). Defaulting to 'library'", 'yellow' ),
     }
 
     unless ( $self->{mode} eq 'patron' || $self->{mode} eq 'library' ) {
-        warn
-"Invalid mode supplied ('library' or 'patron' is expected). Defaulting to 'library'";
         $self->{mode} = 'library';
+        say colored( "Invalid mode supplied ('library' or 'patron' is expected). Defaulting to 'library'", 'yellow' ),
     }
 }
 
