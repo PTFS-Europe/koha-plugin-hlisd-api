@@ -125,6 +125,7 @@ It takes an optional C<$args> parameter, which is a hashref with the following k
 sub harvest_hlisd {
     my ( $self ) = @_;
 
+    $self->runtime_params_check();
     $self->plugin_config_check();
     $self->patron_attribute_types_check();
 
@@ -290,7 +291,7 @@ sub patron_attribute_types_check {
         unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{toupdatefield} } );
 }
 
-=head2 koha_patron_to_hlisd_mapping
+=head3 koha_patron_to_hlisd_mapping
 
  Maps the Koha borrowers column names to the names used in the HLISD API.
 
@@ -336,6 +337,26 @@ sub koha_patron_to_hlisd_mapping {
         { 'surname' => 'name' },
         { 'zipcode' => 'postcode' }
     ];
+}
+
+=head3 runtime_params_check
+
+Checks the runtime parameters and sets default values if they are not set
+
+=cut
+
+sub runtime_params_check {
+    my ($self) = @_;
+
+    unless ($self->{mode}) {
+        warn "Mode not specified with the -m or --mode option ('library' or 'patron'). Defaulting to 'library'";
+        $self->{mode} = 'library';
+    }
+
+    unless ($self->{mode} eq 'patron' || $self->{mode} eq 'library') {
+        warn "Invalid mode supplied ('library' or 'patron' is expected). Defaulting to 'library'";
+        $self->{mode} = 'library';
+    }
 }
 
 1;

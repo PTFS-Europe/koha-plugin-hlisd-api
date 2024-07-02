@@ -41,13 +41,12 @@ if ($get_help) {
     exit 1;
 }
 
-die "A mode needs to be specified with the -m or --mode option ('library' or 'patron')" unless $mode;
-die "Invalid mode supplied ('library' or 'patron' is expected)" unless $mode eq 'patron' || $mode eq 'library';
-
-Koha::Plugin::Com::PTFSEurope::HLISD->new({
-        debug   => $debug,
-        mode    => $mode
-    })->harvest_hlisd();
+Koha::Plugin::Com::PTFSEurope::HLISD->new(
+    {
+        debug => $debug,
+        mode  => $mode
+    }
+)->harvest_hlisd();
 
 sub get_help {
     print <<"HELP";
