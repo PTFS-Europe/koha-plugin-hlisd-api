@@ -168,6 +168,9 @@ sub harvest_libraries {
             }
         );
 
+        my $prepend = $library->{attributes}->{'document-supply'};
+        $prepend = substr( $prepend, 0, index( $prepend, ';' ) ) if ( index( $prepend, ';' ) != -1 );
+
         if($koha_library){
             $self->debug_msg(
                 sprintf(
@@ -182,7 +185,7 @@ sub harvest_libraries {
         my $library = Koha::Library->new(
             {
                 branchcode => $library->{id},
-                branchname => $library->{attributes}->{'document-supply'}
+                branchname => $prepend
                     . ' - ' . $library->{attributes}->{ $self->get_HLISD_library_field('branchname') },
                 branchaddress1 => $library->{attributes}->{$self->get_HLISD_library_field('branchaddress1')},
                 branchzip => $library->{attributes}->{$self->get_HLISD_library_field('branchzip')},
