@@ -110,7 +110,7 @@ sub uninstall() {
     return 1;
 }
 
-=head3 harvest_list
+=head3 harvest_hlisd
 
 Method that handles a HLISD harvest
 
