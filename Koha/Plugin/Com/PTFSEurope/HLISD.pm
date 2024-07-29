@@ -152,11 +152,13 @@ sub harvest_libraries {
     my $libraries = $res->{data};
 
     my $mapping = $self->koha_library_to_hlisd_mapping();
+    my $importlibrariesstartingwith = $self->{config}->{importlibrariesstartingwith} || '';
 
-    #my $i = 0;    #DEV ONLY: ONLY LOAD 30 LIBRARIES FOR TESTING
     foreach my $library (@$libraries) {
-        #last if $i == 30;    #DEV ONLY: ONLY LOAD 30 LIBRARIES FOR TESTING
-        #$i++;                #DEV ONLY: ONLY LOAD 30 LIBRARIES FOR TESTING
+
+        next if $importlibrariesstartingwith
+            and not grep { $library->{attributes}->{'document-supply'} =~ /^\Q$_\E/i }
+                map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
 
         my $hlisd_field = $self->get_HLISD_library_field('branchname');
         my $koha_library = Koha::Libraries->find(
