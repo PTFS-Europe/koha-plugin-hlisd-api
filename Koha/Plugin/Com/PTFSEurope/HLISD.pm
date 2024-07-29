@@ -181,7 +181,8 @@ sub harvest_libraries {
         my $library = Koha::Library->new(
             {
                 branchcode => $library->{id},
-                branchname => $library->{attributes}->{$self->get_HLISD_library_field('branchname')},
+                branchname => $library->{attributes}->{'document-supply'}
+                    . ' - ' . $library->{attributes}->{ $self->get_HLISD_library_field('branchname') },
                 branchaddress1 => $library->{attributes}->{$self->get_HLISD_library_field('branchaddress1')},
                 branchzip => $library->{attributes}->{$self->get_HLISD_library_field('branchzip')},
                 branchemail => $library->{attributes}->{$self->get_HLISD_library_field('branchemail')},
