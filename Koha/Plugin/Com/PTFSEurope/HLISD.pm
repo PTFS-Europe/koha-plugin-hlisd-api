@@ -119,7 +119,8 @@ Method that handles a HLISD harvest
 sub harvest_hlisd {
     my ($self) = @_;
 
-    $self->runtime_params_check();
+    return unless $self->runtime_params_check();
+
     $self->plugin_config_check();
 
     if ( $self->{mode} eq 'patron' ) {
@@ -502,15 +503,8 @@ Checks the runtime parameters and sets default values if they are not set
 sub runtime_params_check {
     my ($self) = @_;
 
-    unless ( $self->{mode} ) {
-        $self->{mode} = 'library';
-        say colored( "Mode not specified with the -m or --mode option ('library' or 'patron'). Defaulting to 'library'", 'yellow' ),
-    }
-
-    unless ( $self->{mode} eq 'patron' || $self->{mode} eq 'library' ) {
-        $self->{mode} = 'library';
-        say colored( "Invalid mode supplied ('library' or 'patron' is expected). Defaulting to 'library'", 'yellow' ),
-    }
+    return 0 unless ( $self->{mode} && ($self->{mode} eq 'patron' || $self->{mode} eq 'library') );
+    return 1;
 }
 
 1;
