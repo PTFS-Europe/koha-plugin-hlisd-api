@@ -21,7 +21,7 @@ use Koha::Patron::Attributes;
 use Koha::Library;
 use Koha::Libraries;
 
-our $VERSION = "1.2.2";
+our $VERSION = "1.2.3";
 
 our $metadata = {
     name            => 'HLISD API',
@@ -192,7 +192,7 @@ sub harvest_libraries {
                 branchcode => $library->{id},
                 branchname => $prepend
                     . ' - ' . $library->{attributes}->{ $self->get_HLISD_library_field('branchname') },
-                branchaddress1 => $address,
+                branchaddress1 => $final_address,
                 branchzip => $library->{attributes}->{$self->get_HLISD_library_field('branchzip')},
                 branchemail => $library->{attributes}->{$self->get_HLISD_library_field('branchemail')},
                 branchillemail => $library->{attributes}->{$self->get_HLISD_library_field('branchillemail')},
