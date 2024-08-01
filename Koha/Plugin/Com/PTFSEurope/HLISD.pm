@@ -181,10 +181,13 @@ sub harvest_libraries {
             next;
         }
 
-        # Replace '\r\n' with ', '
         my $address = $library->{attributes}->{ $self->get_HLISD_library_field('branchaddress1') };
+        $address =~ s/,//g;
+
         my @address_split = split( /\r\n/, $address );
-        my $final_address = join( ', ', @address_split );
+        my @address_lines = map { $_ =~ s/^\s+|\s+$//gr } @address_split;
+
+        my $final_address = join( ', ', @address_lines );
 
         $self->debug_msg( sprintf( "Importing %s", $library->{id} ) );
         my $library = Koha::Library->new(
