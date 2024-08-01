@@ -21,7 +21,7 @@ use Koha::Patron::Attributes;
 use Koha::Library;
 use Koha::Libraries;
 
-our $VERSION = "1.2.3";
+our $VERSION = "1.2.4";
 
 our $metadata = {
     name            => 'HLISD API',
