@@ -21,13 +21,13 @@ use Koha::Patron::Attributes;
 use Koha::Library;
 use Koha::Libraries;
 
-our $VERSION = "1.2.1";
+our $VERSION = "1.2.2";
 
 our $metadata = {
     name            => 'HLISD API',
     author          => 'PTFS-Europe',
     date_authored   => '2024-04-26',
-    date_updated    => '2024-07-29',
+    date_updated    => '2024-08-01',
     minimum_version => '23.11.00.000',
     maximum_version => undef,
     version         => $VERSION,
@@ -181,13 +181,18 @@ sub harvest_libraries {
             next;
         }
 
+        # Replace '\r\n' with ', '
+        my $address = $library->{attributes}->{ $self->get_HLISD_library_field('branchaddress1') };
+        my @address_split = split( /\r\n/, $address );
+        my $final_address = join( ', ', @address_split );
+
         $self->debug_msg( sprintf( "Importing %s", $library->{id} ) );
         my $library = Koha::Library->new(
             {
                 branchcode => $library->{id},
                 branchname => $prepend
                     . ' - ' . $library->{attributes}->{ $self->get_HLISD_library_field('branchname') },
-                branchaddress1 => $library->{attributes}->{$self->get_HLISD_library_field('branchaddress1')},
+                branchaddress1 => $address,
                 branchzip => $library->{attributes}->{$self->get_HLISD_library_field('branchzip')},
                 branchemail => $library->{attributes}->{$self->get_HLISD_library_field('branchemail')},
                 branchillemail => $library->{attributes}->{$self->get_HLISD_library_field('branchillemail')},
