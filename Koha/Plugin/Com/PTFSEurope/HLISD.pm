@@ -378,6 +378,8 @@ sub debug_msg {
 sub _get_patrons {
     my ($self) = @_;
 
+    my $partner_code = C4::Context->preference('ILLPartnerCode');
+
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless scalar @{ $patrons->as_list() };
 
