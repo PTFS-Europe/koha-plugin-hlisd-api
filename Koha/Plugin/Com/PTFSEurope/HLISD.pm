@@ -178,24 +178,14 @@ sub HLISD_create_libraries {
             next;
         }
 
-        my $address = $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchaddress1') };
-        $address =~ s/,//g;
-
-        my @address_split = split( /\r\n/, $address );
-        my @address_lines = map { $_ =~ s/^\s+|\s+$//gr } @address_split;
-
-        my $final_address = join( ', ', @address_lines );
-
-        my $branchname_prefix = $library->{attributes}->{'document-supply'};
-        $branchname_prefix = substr( $branchname_prefix, 0, index( $branchname_prefix, ';' ) ) if ( index( $branchname_prefix, ';' ) != -1 );
-
         $self->debug_msg( sprintf( "Importing %s", $library->{id} ) );
         my $library = Koha::Library->new(
             {
                 branchcode => $library->{id},
-                branchname => $branchname_prefix
+                branchname => $self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} )
                     . ' - ' . $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchname') },
-                branchaddress1 => $final_address,
+                branchaddress1 => $self->process_HLISD_address(
+                    $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchaddress1') } ),
                 branchzip => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchzip')},
                 branchemail => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchemail')},
                 branchillemail => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchillemail')},
@@ -204,6 +194,37 @@ sub HLISD_create_libraries {
             }
         )->store();
     }
+}
+
+=head3 process_HLISD_address
+
+Method that handles a HLISD address processing
+
+=cut
+
+sub process_HLISD_address {
+    my ($self, $address) = @_;
+
+    $address =~ s/,//g;
+    my @address_split = split( /\r\n/, $address );
+    my @address_lines = map { $_ =~ s/^\s+|\s+$//gr } @address_split;
+
+    return join( ', ', @address_lines );
+}
+
+=head3 process_HLISD_prefix
+
+Method that handles a HLISD prefix processing
+
+=cut
+
+sub process_HLISD_prefix {
+    my ( $self, $document_supply ) = @_;
+
+    return substr( $document_supply, 0, index( $document_supply, ';' ) )
+        if ( index( $document_supply, ';' ) != -1 );
+
+    return $document_supply;
 }
 
 =head3 get_HLISD_counterpart_field
