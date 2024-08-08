@@ -250,7 +250,7 @@ sub harvest_patrons {
 
         unless ($libraryidfield_type) {
             $self->debug_msg(
-                "No library ID found for patron " . $patron->borrowernumber );
+                "No library ID field data found for patron " . $patron->borrowernumber );
             next;
         }
 
