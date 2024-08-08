@@ -123,6 +123,8 @@ sub harvest_hlisd {
 
     if ( $self->{type} eq 'patron' && $self->{mode} eq 'update' ) {
         $self->HLISD_update_patrons();
+    } elsif ( $self->{type} eq 'patron' && $self->{mode} eq 'create' ) {
+        $self->HLISD_create_patrons();
     } elsif ( $self->{type} eq 'library' && $self->{mode} eq 'create' ) {
         $self->HLISD_create_libraries();
     } else {
@@ -186,6 +188,85 @@ sub HLISD_create_libraries {
                 branchurl      => $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchurl') },
             }
         )->store();
+    }
+}
+
+=head3 HLISD_create_patrons
+
+Method that handles a HLISD patron harvest create
+
+This method retrieves a list of libraries from the HLISD API and creates
+new patrons of ILL Partner category in Koha based on the mapping between Koha and HLISD fields.
+
+=cut
+
+sub HLISD_create_patrons {
+    my ($self) = @_;
+
+    $self->required_patron_config_check();
+
+    my $res       = $self->{_api}->Libraries();
+    my $libraries = $res->{data};
+
+    my $importlibrariesstartingwith = $self->{config}->{importlibrariesstartingwith} || '';
+
+    foreach my $library (@$libraries) {
+
+        next if $importlibrariesstartingwith && !$library->{attributes}->{'document-supply'};
+        next
+            if $importlibrariesstartingwith
+            and not grep { $library->{attributes}->{'document-supply'} =~ /^\Q$_\E/i }
+            map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
+
+        my $koha_patron = Koha::Patrons->search(
+            [
+                {
+                    'cardnumber' => $self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} )
+                },
+                {
+                    'extended_attributes.code'      => $self->{config}->{libraryidfield},
+                    'extended_attributes.attribute' => { '=' => $library->{id} },
+                }
+            ],
+            { 'prefetch' => ['extended_attributes'] }
+        );
+
+        if ($koha_patron->count) {
+            $self->debug_msg(
+                sprintf(
+                    "Patron with HLISD ID %s already exists. ".$self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} )." Skipping",
+                    $library->{id}
+                )
+            );
+            next;
+        }
+
+        $self->debug_msg( sprintf( "Importing %s", $library->{id} ) );
+        my $patron = Koha::Patron->new(
+            {
+                categorycode => C4::Context->preference('ILLPartnerCode'),
+                branchcode   => 'IL',    #TODO: Make this abstract. Add config input for ILL libraries branchcode
+                cardnumber   => $self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} ),
+                surname      => substr(
+                          $self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} ) . ' - '
+                        . $library->{attributes}->{ $self->get_HLISD_counterpart_field('surname') }, 0, 75
+                ),
+                address => $self->process_HLISD_address(
+                    $library->{attributes}->{ $self->get_HLISD_counterpart_field('address') }
+                ),
+                phone    => $library->{attributes}->{ $self->get_HLISD_counterpart_field('phone') },
+                email    => $library->{attributes}->{ $self->get_HLISD_counterpart_field('email') },
+                emailpro => $library->{attributes}->{ $self->get_HLISD_counterpart_field('email') },
+                zipcode  => $library->{attributes}->{ $self->get_HLISD_counterpart_field('zipcode') }
+            }
+        )->store();
+
+        $patron->add_extended_attribute(
+            {
+                code      => $self->{config}->{libraryidfield},
+                attribute => $library->{id}
+            }
+        );
     }
 }
 
