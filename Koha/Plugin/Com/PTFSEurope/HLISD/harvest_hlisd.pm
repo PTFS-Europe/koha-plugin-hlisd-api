@@ -28,11 +28,11 @@ use Koha::Plugin::Com::PTFSEurope::HLISD;
 # Command line option values
 my $get_help   = 0;
 my $debug      = 0;
-my $mode;
+my $type;
 
 my $options = GetOptions(
     'h|help'       => \$get_help,
-    'mode|m=s'     => \$mode,
+    'type|t=s'     => \$type,
     'debug'        => \$debug
 );
 
@@ -44,7 +44,7 @@ if ($get_help) {
 Koha::Plugin::Com::PTFSEurope::HLISD->new(
     {
         debug => $debug,
-        mode  => $mode
+        type => $type
     }
 )->harvest_hlisd();
 
@@ -55,10 +55,10 @@ $0: Run a HLISD harvest
 Parameters:
     --help or -h                         get help
     --debug                              print additional debugging info during run
-    --mode or -m                         specificies mode: 'patron' or 'library'
+    --type or -t                         specificies type: 'patron' or 'library'
 
 Usage example:
-./misc/cronjobs/harvest_hlisd.pl --mode patron --debug
+./misc/cronjobs/harvest_hlisd.pl --type patron --debug
 
 HELP
 }

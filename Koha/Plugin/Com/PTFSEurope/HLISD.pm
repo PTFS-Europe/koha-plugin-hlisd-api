@@ -60,7 +60,7 @@ sub new {
     $self->{_api} = $api;
 
     $self->{debug} = $args->{debug};
-    $self->{mode}  = $args->{mode};
+    $self->{type} = $args->{type};
 
     return $self;
 }
@@ -123,14 +123,14 @@ sub harvest_hlisd {
 
     $self->plugin_config_check();
 
-    if ( $self->{mode} eq 'patron' ) {
+    if ( $self->{type} eq 'patron' ) {
         $self->harvest_patrons();
     }
-    elsif ( $self->{mode} eq 'library' ) {
+    elsif ( $self->{type} eq 'library' ) {
         $self->harvest_libraries();
     }
     else {
-        $self->log->error( "Invalid harvest mode: " . $self->{mode} );
+        $self->log->error( "Invalid harvest type: " . $self->{type} );
     }
 }
 
@@ -327,7 +327,7 @@ sub harvest_patrons {
 
 =head3 debug_msg
 
- Prints a debug message to STDERR if debug mode is enabled.
+ Prints a debug message to STDERR if debug is enabled.
 
  Parameters:
  - $msg: The message to be printed. If it is a hash reference, it will be converted to a string using Data::Dumper.
@@ -402,7 +402,7 @@ sub plugin_config_check {
     die "HLISD API email not set"    unless $self->{config}->{email};
     die "HLISD API password not set" unless $self->{config}->{password};
 
-    if ( $self->{mode} eq 'patron' ) {
+    if ( $self->{type} eq 'patron' ) {
         die "Patron attribute type field for 'Library ID' not set"
           unless $self->{config}->{libraryidfield};
         die "Patron attribute type field for 'To update' not set"
@@ -515,7 +515,7 @@ Checks the runtime parameters and sets default values if they are not set
 sub runtime_params_check {
     my ($self) = @_;
 
-    return 0 unless ( $self->{mode} && ($self->{mode} eq 'patron' || $self->{mode} eq 'library') );
+    return 0 unless ( $self->{type} && ( $self->{type} eq 'patron' || $self->{type} eq 'library' ) );
     return 1;
 }
 
