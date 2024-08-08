@@ -248,7 +248,7 @@ their respective patrons' attributes in Koha based on the mapping between Koha a
 
 sub HLISD_update_patrons {
     my ($self) = @_;
-    $self->patron_attribute_types_check();
+    $self->required_patron_config_check();
 
     my $patrons = $self->_get_patrons();
 
@@ -378,10 +378,6 @@ sub debug_msg {
 sub _get_patrons {
     my ($self) = @_;
 
-    my $partner_code = C4::Context->preference('ILLPartnerCode');
-    die "No ILL partner code set. Please set the ILLPartnerCode system preference."
-        unless $partner_code;
-
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless scalar @{ $patrons->as_list() };
 
@@ -424,7 +420,7 @@ sub plugin_config_check {
     }
 }
 
-=head3 patron_attribute_types_check
+=head3 required_patron_config_check
 
 Checks that the necessary patron attribute types have been set.
 
@@ -432,8 +428,12 @@ Throws a die() statement if any of the necessary patron attribute types is missi
 
 =cut
 
-sub patron_attribute_types_check {
+sub required_patron_config_check {
     my ($self) = @_;
+
+    my $partner_code = C4::Context->preference('ILLPartnerCode');
+    die "No ILL partner code set. Please set the ILLPartnerCode system preference."
+        unless $partner_code;
 
     die "Patron attribute type '" . $self->{config}->{libraryidfield} . "' to map to 'Library ID' not found"
         unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{libraryidfield} } );
