@@ -21,13 +21,13 @@ use Koha::Patron::Attributes;
 use Koha::Library;
 use Koha::Libraries;
 
-our $VERSION = "1.2.4";
+our $VERSION = "1.3.0";
 
 our $metadata = {
     name            => 'HLISD API',
     author          => 'PTFS-Europe',
     date_authored   => '2024-04-26',
-    date_updated    => '2024-08-01',
+    date_updated    => '2024-08-08',
     minimum_version => '23.11.00.000',
     maximum_version => undef,
     version         => $VERSION,
