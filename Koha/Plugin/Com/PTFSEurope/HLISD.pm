@@ -125,19 +125,19 @@ sub harvest_hlisd {
     $self->plugin_config_check();
 
     if ( $self->{type} eq 'patron' && $self->{mode} eq 'update' ) {
-        $self->harvest_patrons();
+        $self->HLISD_update_patrons();
     }
     elsif ( $self->{type} eq 'library' && $self->{mode} eq 'create' ) {
-        $self->harvest_libraries();
+        $self->HLISD_create_libraries();
     }
     else {
         $self->log->error( "Invalid harvest type '" . $self->{type} . "' or mode '" . $self->{mode} . "'" );
     }
 }
 
-=head3 harvest_libraries
+=head3 HLISD_create_libraries
 
-Method that handles a HLISD library harvest
+Method that handles a HLISD library harvest create
 
 This method retrieves a list of libraries from the HLISD API and creates
 new libraries in Koha based on the mapping between Koha and HLISD fields.
@@ -147,7 +147,7 @@ DEV ONLY: Run the following SQL to delete all libraries where branchcode is nume
 
 =cut
 
-sub harvest_libraries {
+sub HLISD_create_libraries {
     my ($self) = @_;
 
     my $res = $self->{_api}->Libraries();
@@ -222,16 +222,16 @@ sub get_HLISD_library_field {
     return $hlisd_field[0]->{$koha_field};
 }
 
-=head3 harvest_patrons
+=head3 HLISD_update_patrons
 
-Method that handles a HLISD patron harvest
+Method that handles a HLISD patron harvest update
 
 This method retrieves a list of libraries from the HLISD API and updates
 their respective patrons' attributes in Koha based on the mapping between Koha and HLISD fields.
 
 =cut
 
-sub harvest_patrons {
+sub HLISD_update_patrons {
     my ($self) = @_;
     $self->patron_attribute_types_check();
 
