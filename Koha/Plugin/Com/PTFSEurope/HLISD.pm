@@ -153,7 +153,6 @@ sub HLISD_create_libraries {
     my $res = $self->{_api}->Libraries();
     my $libraries = $res->{data};
 
-    my $mapping = $self->koha_library_to_hlisd_mapping();
     my $importlibrariesstartingwith = $self->{config}->{importlibrariesstartingwith} || '';
 
     foreach my $library (@$libraries) {
