@@ -126,7 +126,7 @@ sub harvest_hlisd {
     } elsif ( $self->{type} eq 'library' && $self->{mode} eq 'create' ) {
         $self->HLISD_create_libraries();
     } else {
-        $self->log->error( "Invalid harvest type '" . $self->{type} . "' or mode '" . $self->{mode} . "'" );
+        die "Invalid harvest type '" . $self->{type} . "' or mode '" . $self->{mode} . "'";
     }
 }
 
