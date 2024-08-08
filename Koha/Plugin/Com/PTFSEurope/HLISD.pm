@@ -168,9 +168,6 @@ sub HLISD_create_libraries {
             }
         );
 
-        my $prepend = $library->{attributes}->{'document-supply'};
-        $prepend = substr( $prepend, 0, index( $prepend, ';' ) ) if ( index( $prepend, ';' ) != -1 );
-
         if($koha_library){
             $self->debug_msg(
                 sprintf(
@@ -189,11 +186,14 @@ sub HLISD_create_libraries {
 
         my $final_address = join( ', ', @address_lines );
 
+        my $branchname_prefix = $library->{attributes}->{'document-supply'};
+        $branchname_prefix = substr( $branchname_prefix, 0, index( $branchname_prefix, ';' ) ) if ( index( $branchname_prefix, ';' ) != -1 );
+
         $self->debug_msg( sprintf( "Importing %s", $library->{id} ) );
         my $library = Koha::Library->new(
             {
                 branchcode => $library->{id},
-                branchname => $prepend
+                branchname => $branchname_prefix
                     . ' - ' . $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchname') },
                 branchaddress1 => $final_address,
                 branchzip => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchzip')},
