@@ -101,7 +101,6 @@ sub Authenticate {
     return $self->_make_request( 'POST', 'auth/login', $data );
 }
 
-
 =head3 _make_request
 
 Make a request to the HLISD API. If the request is not for /auth/login, it will automatically call

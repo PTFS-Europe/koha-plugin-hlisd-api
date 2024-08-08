@@ -53,15 +53,14 @@ sub new {
     my $self = $class->SUPER::new($args);
 
     $self->{config} =
-      decode_json( $self->retrieve_data('hlisd_config') || '{}' );
+        decode_json( $self->retrieve_data('hlisd_config') || '{}' );
 
-    my $api =
-      Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API->new( $self->{config} );
+    my $api = Koha::Plugin::Com::PTFSEurope::HLISD::Lib::API->new( $self->{config} );
     $self->{_api} = $api;
 
     $self->{debug} = $args->{debug};
-    $self->{type} = $args->{type};
-    $self->{mode} = $args->{mode};
+    $self->{type}  = $args->{type};
+    $self->{mode}  = $args->{mode};
 
     return $self;
 }
@@ -83,10 +82,9 @@ sub configure {
         $template->param( config => $self->{config}, );
 
         $self->output_html( $template->output() );
-    }
-    else {
+    } else {
         my $hashed =
-          { map { $_ => ( scalar $cgi->param($_) )[0] } $cgi->param };
+            { map { $_ => ( scalar $cgi->param($_) )[0] } $cgi->param };
 
         $self->store_data( { hlisd_config => scalar encode_json($hashed) } );
         $self->go_home();
@@ -101,8 +99,7 @@ sub upgrade {
     my ( $self, $args ) = @_;
 
     my $dt = dt_from_string();
-    $self->store_data(
-        { last_upgraded => $dt->ymd('-') . ' ' . $dt->hms(':') } );
+    $self->store_data( { last_upgraded => $dt->ymd('-') . ' ' . $dt->hms(':') } );
 
     return 1;
 }
@@ -126,11 +123,9 @@ sub harvest_hlisd {
 
     if ( $self->{type} eq 'patron' && $self->{mode} eq 'update' ) {
         $self->HLISD_update_patrons();
-    }
-    elsif ( $self->{type} eq 'library' && $self->{mode} eq 'create' ) {
+    } elsif ( $self->{type} eq 'library' && $self->{mode} eq 'create' ) {
         $self->HLISD_create_libraries();
-    }
-    else {
+    } else {
         $self->log->error( "Invalid harvest type '" . $self->{type} . "' or mode '" . $self->{mode} . "'" );
     }
 }
@@ -150,7 +145,7 @@ DEV ONLY: Run the following SQL to delete all libraries where branchcode is nume
 sub HLISD_create_libraries {
     my ($self) = @_;
 
-    my $res = $self->{_api}->Libraries();
+    my $res       = $self->{_api}->Libraries();
     my $libraries = $res->{data};
 
     my $importlibrariesstartingwith = $self->{config}->{importlibrariesstartingwith} || '';
@@ -158,17 +153,14 @@ sub HLISD_create_libraries {
     foreach my $library (@$libraries) {
 
         next if $importlibrariesstartingwith && !$library->{attributes}->{'document-supply'};
-        next if $importlibrariesstartingwith
+        next
+            if $importlibrariesstartingwith
             and not grep { $library->{attributes}->{'document-supply'} =~ /^\Q$_\E/i }
-                map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
+            map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
 
-        my $koha_library = Koha::Libraries->find(
-            {
-                branchcode => $library->{id}
-            }
-        );
+        my $koha_library = Koha::Libraries->find( { branchcode => $library->{id} } );
 
-        if($koha_library){
+        if ($koha_library) {
             $self->debug_msg(
                 sprintf(
                     "Library %s already exists. Skipping",
@@ -182,15 +174,16 @@ sub HLISD_create_libraries {
         my $library = Koha::Library->new(
             {
                 branchcode => $library->{id},
-                branchname => $self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} )
-                    . ' - ' . $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchname') },
+                branchname => $self->process_HLISD_prefix( $library->{attributes}->{'document-supply'} ) . ' - '
+                    . $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchname') },
                 branchaddress1 => $self->process_HLISD_address(
-                    $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchaddress1') } ),
-                branchzip => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchzip')},
-                branchemail => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchemail')},
-                branchillemail => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchillemail')},
-                branchcountry => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchcountry')},
-                branchurl => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchurl')},
+                    $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchaddress1') }
+                ),
+                branchzip      => $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchzip') },
+                branchemail    => $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchemail') },
+                branchillemail => $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchillemail') },
+                branchcountry  => $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchcountry') },
+                branchurl      => $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchurl') },
             }
         )->store();
     }
@@ -203,7 +196,7 @@ Method that handles a HLISD address processing
 =cut
 
 sub process_HLISD_address {
-    my ($self, $address) = @_;
+    my ( $self, $address ) = @_;
 
     $address =~ s/,//g;
     my @address_split = split( /\r\n/, $address );
@@ -269,11 +262,10 @@ sub HLISD_update_patrons {
     while ( my $patron = $patrons->next ) {
 
         my $libraryidfield_type =
-          $patron->get_extended_attribute( $self->{config}->{libraryidfield} );
+            $patron->get_extended_attribute( $self->{config}->{libraryidfield} );
 
         unless ($libraryidfield_type) {
-            $self->debug_msg(
-                "No library ID field data found for patron " . $patron->borrowernumber );
+            $self->debug_msg( "No library ID field data found for patron " . $patron->borrowernumber );
             next;
         }
 
@@ -318,11 +310,13 @@ sub HLISD_update_patrons {
                     $hlisd_field,
                     colored( 'HLISD', 'blue' ),
                     (
-                        defined $koha_value ? colored( $koha_value, 'green' )
+                        defined $koha_value
+                        ? colored( $koha_value, 'green' )
                         : '(undef)'
                     ),
                     (
-                        defined $hlisd_value ? colored( $hlisd_value, 'blue' )
+                        defined $hlisd_value
+                        ? colored( $hlisd_value, 'blue' )
                         : '(undef)'
                     )
                 )
@@ -336,12 +330,11 @@ sub HLISD_update_patrons {
                 $patron->store;
 
                 $self->debug_msg(
-                    colored( "  MISMATCH: ", 'yellow' )
-                      . sprintf(
+                    colored( "  MISMATCH: ", 'yellow' ) . sprintf(
                         "Updated %s for patron #%s - %s",
                         $koha_field, $patron->borrowernumber,
                         $patron->surname
-                      )
+                    )
                 );
             }
         }
@@ -386,9 +379,8 @@ sub _get_patrons {
     my ($self) = @_;
 
     my $partner_code = C4::Context->preference('ILLPartnerCode');
-    die
-"No ILL partner code set. Please set the ILLPartnerCode system preference."
-      unless $partner_code;
+    die "No ILL partner code set. Please set the ILLPartnerCode system preference."
+        unless $partner_code;
 
     my $patrons = Koha::Patrons->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless scalar @{ $patrons->as_list() };
@@ -402,8 +394,7 @@ sub _get_patrons {
     )->_resultset()->search_related('borrowernumber');
     die "No patron records set to update." unless $patrons_to_update->count;
 
-    my $ill_partner_patrons =
-      $patrons_to_update->search( { categorycode => $partner_code } );
+    my $ill_partner_patrons = $patrons_to_update->search( { categorycode => $partner_code } );
     die "No ILL partner patrons found." unless $ill_partner_patrons->count;
 
     my $patrons_to_return = Koha::Patrons->_new_from_dbic($ill_partner_patrons);
@@ -427,9 +418,9 @@ sub plugin_config_check {
 
     if ( $self->{type} eq 'patron' ) {
         die "Patron attribute type field for 'Library ID' not set"
-          unless $self->{config}->{libraryidfield};
+            unless $self->{config}->{libraryidfield};
         die "Patron attribute type field for 'To update' not set"
-          unless $self->{config}->{toupdatefield};
+            unless $self->{config}->{toupdatefield};
     }
 }
 
@@ -444,17 +435,11 @@ Throws a die() statement if any of the necessary patron attribute types is missi
 sub patron_attribute_types_check {
     my ($self) = @_;
 
-    die "Patron attribute type '"
-      . $self->{config}->{libraryidfield}
-      . "' to map to 'Library ID' not found"
-      unless Koha::Patron::Attribute::Types->find(
-        { code => $self->{config}->{libraryidfield} } );
+    die "Patron attribute type '" . $self->{config}->{libraryidfield} . "' to map to 'Library ID' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{libraryidfield} } );
 
-    die "Patron attribute type '"
-      . $self->{config}->{toupdatefield}
-      . "' to map to 'To update' not found"
-      unless Koha::Patron::Attribute::Types->find(
-        { code => $self->{config}->{toupdatefield} } );
+    die "Patron attribute type '" . $self->{config}->{toupdatefield} . "' to map to 'To update' not found"
+        unless Koha::Patron::Attribute::Types->find( { code => $self->{config}->{toupdatefield} } );
 }
 
 =head3 koha_patron_to_hlisd_mapping

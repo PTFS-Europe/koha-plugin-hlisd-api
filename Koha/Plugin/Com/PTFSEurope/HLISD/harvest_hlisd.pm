@@ -18,7 +18,7 @@
 # along with Koha; if not, see <http://www.gnu.org/licenses>.
 
 use Modern::Perl;
-use Getopt::Long    qw( GetOptions );
+use Getopt::Long qw( GetOptions );
 use POSIX;
 
 use Koha::Script;
@@ -26,16 +26,16 @@ use Koha::Patrons;
 use Koha::Plugin::Com::PTFSEurope::HLISD;
 
 # Command line option values
-my $get_help   = 0;
-my $debug      = 0;
+my $get_help = 0;
+my $debug    = 0;
 my $type;
 my $mode;
 
 my $options = GetOptions(
-    'h|help'       => \$get_help,
-    'type|t=s'     => \$type,
-    'mode|m=s'     => \$mode,
-    'debug'        => \$debug
+    'h|help'   => \$get_help,
+    'type|t=s' => \$type,
+    'mode|m=s' => \$mode,
+    'debug'    => \$debug
 );
 
 if ($get_help) {
@@ -46,8 +46,8 @@ if ($get_help) {
 Koha::Plugin::Com::PTFSEurope::HLISD->new(
     {
         debug => $debug,
-        type => $type,
-        mode => $mode
+        type  => $type,
+        mode  => $mode
     }
 )->harvest_hlisd();
 
