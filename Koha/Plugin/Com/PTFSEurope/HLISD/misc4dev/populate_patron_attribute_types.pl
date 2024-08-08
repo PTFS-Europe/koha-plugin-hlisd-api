@@ -3,6 +3,7 @@ use Try::Tiny;
 use C4::Context;
 
 use Koha::Patron::Attribute::Type;
+use Koha::Patron::Attributes;
 
 my $ill_partner_category = C4::Context->preference('ILLPartnerCode') || 'IL';
 
