@@ -162,7 +162,6 @@ sub HLISD_create_libraries {
             and not grep { $library->{attributes}->{'document-supply'} =~ /^\Q$_\E/i }
                 map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
 
-        my $hlisd_field = $self->get_HLISD_counterpart_field('branchname');
         my $koha_library = Koha::Libraries->find(
             {
                 branchcode => $library->{id}
