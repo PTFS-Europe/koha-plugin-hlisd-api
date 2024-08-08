@@ -61,6 +61,7 @@ sub new {
 
     $self->{debug} = $args->{debug};
     $self->{type} = $args->{type};
+    $self->{mode} = $args->{mode};
 
     return $self;
 }
@@ -123,14 +124,14 @@ sub harvest_hlisd {
 
     $self->plugin_config_check();
 
-    if ( $self->{type} eq 'patron' ) {
+    if ( $self->{type} eq 'patron' && $self->{mode} eq 'update' ) {
         $self->harvest_patrons();
     }
-    elsif ( $self->{type} eq 'library' ) {
+    elsif ( $self->{type} eq 'library' && $self->{mode} eq 'create' ) {
         $self->harvest_libraries();
     }
     else {
-        $self->log->error( "Invalid harvest type: " . $self->{type} );
+        $self->log->error( "Invalid harvest type '" . $self->{type} . "' or mode '" . $self->{mode} . "'" );
     }
 }
 
@@ -516,6 +517,7 @@ sub runtime_params_check {
     my ($self) = @_;
 
     return 0 unless ( $self->{type} && ( $self->{type} eq 'patron' || $self->{type} eq 'library' ) );
+    return 0 unless ( $self->{mode} && ( $self->{mode} eq 'update' || $self->{mode} eq 'create' ) );
     return 1;
 }
 
