@@ -422,8 +422,9 @@ sub plugin_config_check {
 
 =head3 required_patron_config_check
 
-Checks that the necessary patron attribute types have been set.
+Checks that all the necessary patron configuration have been set.
 
+Throws a die() statement if ILLPartnerCode system preference is not set.
 Throws a die() statement if any of the necessary patron attribute types is missing.
 
 =cut
