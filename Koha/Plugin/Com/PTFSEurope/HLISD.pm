@@ -157,6 +157,7 @@ sub harvest_libraries {
 
     foreach my $library (@$libraries) {
 
+        next if $importlibrariesstartingwith && !$library->{attributes}->{'document-supply'};
         next if $importlibrariesstartingwith
             and not grep { $library->{attributes}->{'document-supply'} =~ /^\Q$_\E/i }
                 map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
