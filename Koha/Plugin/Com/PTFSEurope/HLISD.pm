@@ -162,7 +162,7 @@ sub HLISD_create_libraries {
             and not grep { $library->{attributes}->{'document-supply'} =~ /^\Q$_\E/i }
                 map { s/^\s+|\s+$//gr } split /,/, $importlibrariesstartingwith;
 
-        my $hlisd_field = $self->get_HLISD_library_field('branchname');
+        my $hlisd_field = $self->get_HLISD_counterpart_field('branchname');
         my $koha_library = Koha::Libraries->find(
             {
                 branchcode => $library->{id}
@@ -182,7 +182,7 @@ sub HLISD_create_libraries {
             next;
         }
 
-        my $address = $library->{attributes}->{ $self->get_HLISD_library_field('branchaddress1') };
+        my $address = $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchaddress1') };
         $address =~ s/,//g;
 
         my @address_split = split( /\r\n/, $address );
@@ -195,28 +195,31 @@ sub HLISD_create_libraries {
             {
                 branchcode => $library->{id},
                 branchname => $prepend
-                    . ' - ' . $library->{attributes}->{ $self->get_HLISD_library_field('branchname') },
+                    . ' - ' . $library->{attributes}->{ $self->get_HLISD_counterpart_field('branchname') },
                 branchaddress1 => $final_address,
-                branchzip => $library->{attributes}->{$self->get_HLISD_library_field('branchzip')},
-                branchemail => $library->{attributes}->{$self->get_HLISD_library_field('branchemail')},
-                branchillemail => $library->{attributes}->{$self->get_HLISD_library_field('branchillemail')},
-                branchcountry => $library->{attributes}->{$self->get_HLISD_library_field('branchcountry')},
-                branchurl => $library->{attributes}->{$self->get_HLISD_library_field('branchurl')},
+                branchzip => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchzip')},
+                branchemail => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchemail')},
+                branchillemail => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchillemail')},
+                branchcountry => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchcountry')},
+                branchurl => $library->{attributes}->{$self->get_HLISD_counterpart_field('branchurl')},
             }
         )->store();
     }
 }
 
-=head3 get_HLISD_library_field
+=head3 get_HLISD_counterpart_field
 
 Returns the value of the HLISD library field corresponding to the given Koha field.
 
 =cut
 
-sub get_HLISD_library_field {
+sub get_HLISD_counterpart_field {
     my ( $self, $koha_field ) = @_;
 
-    my $mapping = $self->koha_library_to_hlisd_mapping();
+    my $mapping =
+          $self->{type} eq 'library'
+        ? $self->koha_library_to_hlisd_mapping()
+        : $self->koha_patron_to_hlisd_mapping();
     my @hlisd_field = grep { $_->{$koha_field} } @{$mapping};
     return $hlisd_field[0]->{$koha_field};
 }
